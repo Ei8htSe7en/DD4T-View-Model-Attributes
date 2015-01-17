@@ -113,7 +113,7 @@ namespace DD4T.ViewModels.Builders
         public IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template)
         {
             IEmbeddedSchemaViewModel viewModel = (IEmbeddedSchemaViewModel)ReflectionCache.CreateInstance(type);
-            viewModel.EmbeddedFields = embeddedFields;
+            viewModel.Fields = embeddedFields;
             viewModel.ComponentTemplate = template;
             viewModel.Builder = this;
             ProcessFields(embeddedFields, viewModel, type, template);

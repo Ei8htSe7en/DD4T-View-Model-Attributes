@@ -107,8 +107,8 @@ namespace DD4T.ViewModels.Attributes
                 else
                 {
                     //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
-                    IList<IComponentPresentationViewModel> list =
-                        (IList<IComponentPresentationViewModel>)ReflectionCache.CreateInstance(propertyType);
+                    IList<IDD4TViewModel> list =
+                        (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
                     foreach (var component in field.LinkedComponentValues)
                     {
                         list.Add(BuildLinkedComponent(field.LinkedComponentValues[0], template, builder));
@@ -139,7 +139,7 @@ namespace DD4T.ViewModels.Attributes
                     else
                     {
                         //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
-                        IList<IComponentPresentationViewModel> list = (IList<IComponentPresentationViewModel>)value;
+                        IList<IDD4TViewModel> list = (IList<IDD4TViewModel>)value;
                         foreach (var model in list)
                         {
                             field.LinkedComponentValues.Add((Component)builder.ConvertToComponentPresentation(model).Component);
@@ -149,7 +149,7 @@ namespace DD4T.ViewModels.Attributes
                 else
                 {
                     field.LinkedComponentValues.Add(linkedComponentTypes == null ? (Component)value
-                        : (Component)builder.ConvertToComponentPresentation((IComponentPresentationViewModel)value).Component);
+                        : (Component)builder.ConvertToComponentPresentation((IDD4TViewModel)value).Component);
                 }
             }
             return field;
@@ -225,7 +225,7 @@ namespace DD4T.ViewModels.Attributes
             if (AllowMultipleValues)
             {
                 //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
-                IList<IEmbeddedSchemaViewModel> list = (IList<IEmbeddedSchemaViewModel>)ReflectionCache.CreateInstance(propertyType);
+                IList<IDD4TViewModel> list = (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
                 foreach (var fieldSet in field.EmbeddedValues)
                 {
                     list.Add(builder.BuildEmbeddedViewModel(
@@ -257,7 +257,7 @@ namespace DD4T.ViewModels.Attributes
                     else
                     {
                         //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
-                        IList<IEmbeddedSchemaViewModel> list = (IList<IEmbeddedSchemaViewModel>)value;
+                        IList<IDD4TViewModel> list = (IList<IDD4TViewModel>)value;
 
                         foreach (var model in list)
                         {
@@ -268,7 +268,7 @@ namespace DD4T.ViewModels.Attributes
                 else
                 {
                     field.EmbeddedValues.Add(embeddedSchemaType == null ? (FieldSet)value
-                        : (FieldSet)builder.ConvertToFieldSet((IEmbeddedSchemaViewModel)value, out schemaName));
+                        : (FieldSet)builder.ConvertToFieldSet((IDD4TViewModel)value, out schemaName));
                 }
                 field.EmbeddedSchema = new Schema { Title = schemaName };
             }

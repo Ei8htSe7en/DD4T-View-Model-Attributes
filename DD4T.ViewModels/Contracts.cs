@@ -11,7 +11,7 @@ namespace DD4T.ViewModels.Contracts
     public interface IDD4TViewModel
     {
         IViewModelBuilder Builder { get; set; }
-        IFieldSet Fields { get; }
+        IFieldSet Fields { get; set; }
         IFieldSet MetadataFields { get; }
     }
 
@@ -21,7 +21,6 @@ namespace DD4T.ViewModels.Contracts
     }
     public interface IEmbeddedSchemaViewModel : IDD4TViewModel
     {
-        IFieldSet EmbeddedFields { get; set; }
         IComponentTemplate ComponentTemplate { get; set; } //we required Component Template here in order to generate Site Edit markup for any linked components in the embedded fields
     }
 
@@ -44,11 +43,10 @@ namespace DD4T.ViewModels.Contracts
 
     public interface IComponentPresentationMocker
     {
-        IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName);
-        IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel);
+        IFieldSet ConvertToFieldSet(IDD4TViewModel viewModel, out string schemaName);
+        IComponentPresentation ConvertToComponentPresentation(IDD4TViewModel viewModel);
         void AddXpathToFields(IFieldSet fieldSet, string baseXpath);
-        string GetXmlRootName(IComponentPresentationViewModel viewModel);
-        string GetXmlRootName(IEmbeddedSchemaViewModel viewModel);
+        string GetXmlRootName(IDD4TViewModel viewModel);
         DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
     }
 
@@ -81,6 +79,10 @@ namespace DD4T.ViewModels.Contracts
                 }
                 return fields;
             }
+            set
+            {
+                fields = value;
+            }
         }
         public IFieldSet MetadataFields
         {
@@ -97,11 +99,6 @@ namespace DD4T.ViewModels.Contracts
 
     public abstract class EmbeddedSchemaViewModelBase : IEmbeddedSchemaViewModel
     {
-        public IFieldSet EmbeddedFields
-        {
-            get;
-            set;
-        }
         public IComponentTemplate ComponentTemplate
         {
             get;
@@ -114,10 +111,8 @@ namespace DD4T.ViewModels.Contracts
         }
         public IFieldSet Fields
         {
-            get
-            {
-                return EmbeddedFields;
-            }
+            get;
+            set;
         }
         public IFieldSet MetadataFields
         {

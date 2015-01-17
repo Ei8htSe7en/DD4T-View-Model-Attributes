@@ -10,18 +10,37 @@ using DD4T.ViewModels.Attributes;
 using DD4T.ViewModels.Contracts;
 using System.Reflection;
 using DD4T.ContentModel;
+using System.Collections;
 
 namespace DD4T.ViewModels.XPM
 {
     public static class XPM
     {
         #region public extension methods
+        /// <summary>
+        /// Returns XPM Markup and Field Value 
+        /// </summary>
+        /// <typeparam name="TModel"></typeparam>
+        /// <typeparam name="TProp"></typeparam>
+        /// <param name="model"></param>
+        /// <param name="propertyLambda"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         public static MvcHtmlString XpmEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
             var fieldProp = GetFieldProperty(propertyLambda);
             var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
             return SiteEditableField<TModel, TProp>(model, fields, fieldProp, index);
         }
+        public static MvcHtmlString XpmEditableField<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
+            where TModel : IDD4TViewModel
+        {
+            var fieldProp = GetFieldProperty(propertyLambda);
+            int index = IndexOf(fieldProp, model, item);
+            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
+            return SiteEditableField<TModel, TProp>(model, fields, fieldProp, index);
+        }
+        
         public static MvcHtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
             bool siteEditEnabled = true;
@@ -35,6 +54,22 @@ namespace DD4T.ViewModels.XPM
             }
             else return null;
         }
+        public static MvcHtmlString XpmMarkupFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
+            where TModel : IDD4TViewModel
+        {
+            bool siteEditEnabled = true;
+            if (model is IComponentPresentationViewModel)
+                siteEditEnabled = SiteEditService.IsSiteEditEnabled(((IComponentPresentationViewModel)model).ComponentPresentation.Component);
+            if (siteEditEnabled)
+            {
+                var fieldProp = GetFieldProperty(propertyLambda);
+                int index = IndexOf(fieldProp, model, item);
+                var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
+                return XpmMarkupFor(fields, fieldProp, index);
+            }
+            else return null;   
+        }
+        
         public static MvcHtmlString StartXpmEditingZone(this IComponentPresentationViewModel model, string region = null)
         {
             return new MvcHtmlString(SiteEditService.GenerateSiteEditComponentTag(model.ComponentPresentation, region));
@@ -42,6 +77,31 @@ namespace DD4T.ViewModels.XPM
         #endregion
 
         #region private methods
+        private static int IndexOf(this IEnumerable enumerable, object obj)
+        {
+            if (obj != null)
+            {
+                int i = 0;
+                foreach (var item in enumerable)
+                {
+                    if (item.Equals(obj)) return i;
+                    i++;
+                }
+            }
+            return -1;
+        }
+        private static int IndexOf<T>(FieldAttributeProperty fieldProp, object model, T item)
+        {
+            int index = -1;
+            object value = fieldProp.Get(model);
+            if (value is IEnumerable<T>)
+            {
+                IEnumerable<T> list = (IEnumerable<T>)value;
+                index = list.IndexOf(item);
+            }
+            else throw new FormatException(String.Format("Generic type of property type {0} does not match generic type of item {1}", value.GetType().Name, typeof(T).Name));
+            return index;
+        }
         private static FieldAttributeProperty GetFieldProperty<TModel, TProp>(Expression<Func<TModel, TProp>> propertyLambda)
         {
             PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
@@ -106,7 +166,15 @@ namespace DD4T.ViewModels.XPM
             var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
             return field;
         }
-
+        public static IField FieldFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) where TModel : IDD4TViewModel
+        {
+            var fieldProp = GetFieldProperty(propertyLambda);
+            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
+            int index = IndexOf(fieldProp, model, item);
+            var fieldName = fieldProp.FieldAttribute.FieldName;
+            var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
+            return field;
+        }
 
     }
 }

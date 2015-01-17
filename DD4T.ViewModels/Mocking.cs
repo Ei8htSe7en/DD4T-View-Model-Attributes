@@ -40,7 +40,7 @@ namespace DD4T.ViewModels.Mocking
     public class ComponentPresentationMocker : IComponentPresentationMocker
     {
         internal ComponentPresentationMocker() { }
-        public IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel) //For mocking DD4T objects
+        public IComponentPresentation ConvertToComponentPresentation(IDD4TViewModel viewModel) //For mocking DD4T objects
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
@@ -63,7 +63,7 @@ namespace DD4T.ViewModels.Mocking
             };
             return result;
         }
-        public IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName)
+        public IFieldSet ConvertToFieldSet(IDD4TViewModel viewModel, out string schemaName)
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
@@ -96,12 +96,7 @@ namespace DD4T.ViewModels.Mocking
             }
         }
 
-        public string GetXmlRootName(IComponentPresentationViewModel viewModel)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string GetXmlRootName(IEmbeddedSchemaViewModel viewModel)
+        public string GetXmlRootName(IDD4TViewModel viewModel)
         {
             throw new NotImplementedException();
         }

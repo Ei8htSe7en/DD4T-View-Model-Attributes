@@ -51,11 +51,7 @@ namespace DD4T.ViewModels.UnitTests
             var titleMarkup = model.XpmMarkupFor(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
             var markup = ((GeneralContentViewModel)model.Content[0]).XpmMarkupFor(m => m.Body);
-            
-            //for (int i = 0; i < 10000; i++)
-            //{
-                
-            //}
+            var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmMarkupFor(m => m.LinkText);
             Assert.IsNotNull(markup);
         }
 
@@ -63,14 +59,15 @@ namespace DD4T.ViewModels.UnitTests
         public void TestEditableField()
         {
             ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            foreach (var content in model.Content)
+            {
+                model.XpmEditableField(m => m.Content, 0);
+            }
             var titleMarkup = model.XpmEditableField(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
+            
             var markup = ((GeneralContentViewModel)model.Content[0]).XpmEditableField(m => m.Body);
             var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmEditableField(m => m.LinkText);
-            //for (int i = 0; i < 10000; i++)
-            //{
-
-            //}
             Assert.IsNotNull(markup);
         }
 
@@ -99,7 +96,7 @@ namespace DD4T.ViewModels.UnitTests
             Random r = new Random();
             ContentContainerViewModel model = new ContentContainerViewModel
             {
-                Content = new ComponentViewModelList<GeneralContentViewModel>
+                Content = new ViewModelList<GeneralContentViewModel>
                 {
                     new GeneralContentViewModel
                     {
@@ -110,7 +107,7 @@ namespace DD4T.ViewModels.UnitTests
                         ShowOnTop = true
                     }
                 },
-                Links = new EmbeddedViewModelList<EmbeddedLinkViewModel>
+                Links = new ViewModelList<EmbeddedLinkViewModel>
                 {
                     new EmbeddedLinkViewModel
                     {
@@ -158,10 +155,10 @@ namespace DD4T.ViewModels.UnitTests
         public string Title { get; set; }
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-        public ComponentViewModelList<GeneralContentViewModel> Content { get; set; }
+        public ViewModelList<GeneralContentViewModel> Content { get; set; }
 
         [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
-        public EmbeddedViewModelList<EmbeddedLinkViewModel> Links { get; set; }
+        public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }
 
     }
     [TestClass]
