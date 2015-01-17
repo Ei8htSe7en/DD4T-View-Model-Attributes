@@ -29,14 +29,17 @@ namespace DD4T.ViewModels.Reflection
                         foreach (var prop in props)
                         {
                             FieldAttributeBase fieldAttribute = prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
-                            result.Add(new FieldAttributeProperty
+                            if (fieldAttribute != null) //only add properties that have the custom attribute
                             {
-                                Name = prop.Name,
-                                FieldAttribute = fieldAttribute,
-                                Set = BuildSetter(prop),
-                                Get = BuildGetter(prop),
-                                PropertyType = prop.PropertyType
-                            });
+                                result.Add(new FieldAttributeProperty
+                                {
+                                    Name = prop.Name,
+                                    FieldAttribute = fieldAttribute,
+                                    Set = BuildSetter(prop),
+                                    Get = BuildGetter(prop),
+                                    PropertyType = prop.PropertyType
+                                });
+                            }
                         }
                         fieldProperties.Add(type, result);
                     }

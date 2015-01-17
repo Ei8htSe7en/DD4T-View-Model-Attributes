@@ -45,7 +45,7 @@ namespace DD4T.ViewModels.UnitTests
         }
 
         [TestMethod]
-        public void TestXPM()
+        public void TestXpmMarkup()
         {
             ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
             var titleMarkup = model.XpmMarkupFor(m => m.Title);
@@ -59,6 +59,21 @@ namespace DD4T.ViewModels.UnitTests
             Assert.IsNotNull(markup);
         }
 
+        [TestMethod]
+        public void TestEditableField()
+        {
+            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            var titleMarkup = model.XpmEditableField(m => m.Title);
+            var compMarkup = model.StartXpmEditingZone();
+            var markup = ((GeneralContentViewModel)model.Content[0]).XpmEditableField(m => m.Body);
+            var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmEditableField(m => m.LinkText);
+            //for (int i = 0; i < 10000; i++)
+            //{
+
+            //}
+            Assert.IsNotNull(markup);
+        }
+
         
         [TestMethod]
         public void TestFieldForExtension()
@@ -67,9 +82,14 @@ namespace DD4T.ViewModels.UnitTests
             var titleField = model.FieldFor(m => m.Title);
             var compMarkup = model.ComponentPresentation.Component;
             IField markup = null;
+            IField embeddedTest = null;
             foreach (var content in model.Content)
             {
                 markup = content.FieldFor(m => m.Body);
+            }
+            foreach (var link in model.Links)
+            {
+                embeddedTest = link.FieldFor(m => m.InternalLink);
             }
             Assert.IsNotNull(markup);
         }
@@ -103,7 +123,7 @@ namespace DD4T.ViewModels.UnitTests
                 Title = "I am a content container!"
             };
 
-            IComponentPresentation cp = ViewModelCore.Builder.ConvertToComponentPresentation(model);
+            IComponentPresentation cp = ViewModelCore.Mocker.ConvertToComponentPresentation(model);
             ((Component)cp.Component).Id = "tcm:1-23-16";
             Assert.IsNotNull(cp);
             return cp;

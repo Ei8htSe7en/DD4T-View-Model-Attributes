@@ -15,21 +15,47 @@ namespace DD4T.ViewModels.XPM
 {
     public static class XPM
     {
-        public static MvcHtmlString SiteEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IComponentPresentationViewModel
+        #region public extension methods
+        public static MvcHtmlString XpmEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
+        {
+            var fieldProp = GetFieldProperty(propertyLambda);
+            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
+            return SiteEditableField<TModel, TProp>(model, fields, fieldProp, index);
+        }
+        public static MvcHtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
+        {
+            bool siteEditEnabled = true;
+            if (model is IComponentPresentationViewModel)
+                siteEditEnabled = SiteEditService.IsSiteEditEnabled(((IComponentPresentationViewModel)model).ComponentPresentation.Component);
+            if (siteEditEnabled)
+            {
+                var fieldProp = GetFieldProperty(propertyLambda);
+                var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
+                return XpmMarkupFor(fields, fieldProp, index);
+            }
+            else return null;
+        }
+        public static MvcHtmlString StartXpmEditingZone(this IComponentPresentationViewModel model, string region = null)
+        {
+            return new MvcHtmlString(SiteEditService.GenerateSiteEditComponentTag(model.ComponentPresentation, region));
+        }
+        #endregion
+
+        #region private methods
+        private static FieldAttributeProperty GetFieldProperty<TModel, TProp>(Expression<Func<TModel, TProp>> propertyLambda)
+        {
+            PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
+            return GetFieldProperty(typeof(TModel), property);
+        }
+        private static MvcHtmlString SiteEditableField<TModel, TProp>(object model, IFieldSet fields, FieldAttributeProperty fieldProp, int index)
         {
             string markup = string.Empty;
             object value = null;
             string propValue = string.Empty;
             try
             {
-                Type modelType = typeof(TModel);
-                PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
-                var fieldProp = GetFieldProperty(modelType, property);
-                if (SiteEditService.IsSiteEditEnabled(model.ComponentPresentation.Component))
-                {
-                    var field = GetField(model, fieldProp);
-                    markup = GenerateSiteEditTag(field, index);
-                }
+                var field = GetField(fields, fieldProp);
+                markup = GenerateSiteEditTag(field, index);
                 value = fieldProp.Get(model);
                 propValue = value == null ? string.Empty : value.ToString();
             }
@@ -46,55 +72,41 @@ namespace DD4T.ViewModels.XPM
                             : SiteEditService.GenerateSiteEditFieldTag(field);
             return result ?? string.Empty;
         }
-        private static IField GetField(IComponentPresentationViewModel model, FieldAttributeProperty fieldProp)
+        private static IField GetField(IFieldSet fields, FieldAttributeProperty fieldProp)
         {
-            var fields = model.ComponentPresentation.Component.Fields;
+
             var fieldName = fieldProp.FieldAttribute.FieldName;
             return fields.ContainsKey(fieldName) ? fields[fieldName] : null;
         }
+
         private static FieldAttributeProperty GetFieldProperty(Type type, PropertyInfo property)
         {
             var props = ReflectionCache.GetFieldProperties(type);
             return props.FirstOrDefault(x => x.Name == property.Name);
         }
 
-        public static MvcHtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IComponentPresentationViewModel
+        private static MvcHtmlString XpmMarkupFor(IFieldSet fields, FieldAttributeProperty fieldProp, int index)
         {
-            if (SiteEditService.IsSiteEditEnabled(model.ComponentPresentation.Component))
+            try
             {
-                IField field;
-                try
-                {
-                    Type modelType = typeof(TModel);
-                    PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
-                    var fieldProp = GetFieldProperty(modelType, property);
-                    field = GetField(model, fieldProp);
-                }
-                catch (NullReferenceException)
-                {
-                    return null;
-                }
-                return new MvcHtmlString(GenerateSiteEditTag(field, index));
+                return new MvcHtmlString(GenerateSiteEditTag(GetField(fields, fieldProp), index));
             }
-            else return null;
+            catch (NullReferenceException)
+            {
+                return null;
+            }
         }
-
-        //testing only
-        public static IField FieldFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IComponentPresentationViewModel
+        #endregion
+        //for testing only
+        public static IField FieldFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
-            Type modelType = typeof(TModel);
-            PropertyInfo property = ReflectionCache.GetPropertyInfo(propertyLambda);
-            var props = ReflectionCache.GetFieldProperties(modelType);
-            var fieldProp = props.FirstOrDefault(x => x.PropertyType == property.PropertyType);
-            var fields = model.ComponentPresentation.Component.Fields;
+            var fieldProp = GetFieldProperty(propertyLambda);
+            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
             var fieldName = fieldProp.FieldAttribute.FieldName;
             var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
             return field;
         }
 
-        public static MvcHtmlString StartXpmEditingZone(this IComponentPresentationViewModel model, string region = null)
-        {
-            return new MvcHtmlString(SiteEditService.GenerateSiteEditComponentTag(model.ComponentPresentation, region));
-        }
+
     }
 }

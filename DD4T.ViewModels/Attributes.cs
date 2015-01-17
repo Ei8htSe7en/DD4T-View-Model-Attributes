@@ -23,7 +23,7 @@ namespace DD4T.ViewModels.Attributes
             this.fieldName = fieldName;
         }
         public abstract object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null);
-        public abstract IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null);
+        public abstract IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null);
         public abstract Type ExpectedReturnType { get; }
         public string FieldName { get { return fieldName; } }
         public bool AllowMultipleValues
@@ -123,7 +123,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.ComponentLink };
             if (value != null)
@@ -240,7 +240,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Embedded };
             string schemaName = string.Empty;
@@ -296,7 +296,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.MultiMediaLink };
 
@@ -335,7 +335,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.MultiMediaLink };
             if (AllowMultipleValues)
@@ -381,7 +381,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Xhtml };
             if (AllowMultipleValues)
@@ -416,7 +416,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Number };
             if (AllowMultipleValues)
@@ -452,7 +452,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Date };
             if (AllowMultipleValues)
@@ -487,7 +487,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return fieldValue;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Keyword };
             if (AllowMultipleValues)
@@ -529,7 +529,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return value;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Keyword };
             if (AllowMultipleValues)
@@ -577,7 +577,7 @@ namespace DD4T.ViewModels.Attributes
             }
             return value;
         }
-        public override IField SetFieldValue(object value, Type propertyType, IViewModelBuilder builder = null)
+        public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
             Field field = new Field { FieldType = FieldType.Keyword };
             if (AllowMultipleValues)

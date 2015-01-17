@@ -11,6 +11,8 @@ namespace DD4T.ViewModels.Contracts
     public interface IDD4TViewModel
     {
         IViewModelBuilder Builder { get; set; }
+        IFieldSet Fields { get; }
+        IFieldSet MetadataFields { get; }
     }
 
     public interface IComponentPresentationViewModel : IDD4TViewModel
@@ -31,12 +33,12 @@ namespace DD4T.ViewModels.Contracts
         IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template);
         T BuildCPViewModel<T>(IComponentPresentation cp) where T : class, IComponentPresentationViewModel;
         T BuildEmbeddedViewModel<T>(IFieldSet embeddedFields, IComponentTemplate template) where T : class, IEmbeddedSchemaViewModel;
-        IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName);
-        IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel);
+
         /// <summary>
-        /// Loads all view model class types into the builder
+        /// Loads all view model class Types from a class Assembly into the builder
         /// </summary>
-        /// <param name="assembly"></param>
+        /// <param name="assembly">The Assembly with the view model Types to load</param>
+        /// <remarks>Required for use of the builder methods that don't require a Type parameter or generic</remarks>
         void LoadViewModels(Assembly assembly);
     }
 
@@ -48,7 +50,6 @@ namespace DD4T.ViewModels.Contracts
         string GetXmlRootName(IComponentPresentationViewModel viewModel);
         string GetXmlRootName(IEmbeddedSchemaViewModel viewModel);
         DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
-
     }
 
 
@@ -58,16 +59,39 @@ namespace DD4T.ViewModels.Contracts
     }
     public abstract class ComponentPresentationViewModelBase : IComponentPresentationViewModel
     {
+        private IFieldSet fields = null;
+        private IFieldSet metadataFields = null;
         public IComponentPresentation ComponentPresentation
         {
             get;
             set;
         }
-
         public IViewModelBuilder Builder
         {
             get;
             set;
+        }
+        public IFieldSet Fields
+        {
+            get
+            {
+                if (fields == null && ComponentPresentation != null)
+                {
+                    fields = ComponentPresentation.Component.Fields;
+                }
+                return fields;
+            }
+        }
+        public IFieldSet MetadataFields
+        {
+            get
+            {
+                if (metadataFields == null && ComponentPresentation != null)
+                {
+                    metadataFields = ComponentPresentation.Component.MetadataFields;
+                }
+                return metadataFields;
+            }
         }
     }
 
@@ -78,17 +102,29 @@ namespace DD4T.ViewModels.Contracts
             get;
             set;
         }
-
         public IComponentTemplate ComponentTemplate
         {
             get;
             set;
         }
-
         public IViewModelBuilder Builder
         {
             get;
             set;
+        }
+        public IFieldSet Fields
+        {
+            get
+            {
+                return EmbeddedFields;
+            }
+        }
+        public IFieldSet MetadataFields
+        {
+            get
+            {
+                return null;
+            }
         }
     }
     //Find a better namespace for this

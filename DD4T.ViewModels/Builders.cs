@@ -17,10 +17,11 @@ namespace DD4T.ViewModels.Builders
 
     public static class ViewModelCore
     {
-        private static IViewModelBuilder viewModelBuilder = new ViewModelBuilder(); //singleton
+        private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(); //singleton
+        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(); //TODO: Implement
         public static IViewModelBuilder Builder { get { return viewModelBuilder; } }
+        public static IComponentPresentationMocker Mocker { get { return mocker; } }
     }
-
 
     /// <summary>
     /// Implementation of View Model Builder. Use as a singleton.
@@ -118,86 +119,9 @@ namespace DD4T.ViewModels.Builders
             ProcessFields(embeddedFields, viewModel, type, template);
             return viewModel;
         }
-        public IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel) //For mocking DD4T objects
-        {
-            Type type = viewModel.GetType();
-            ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
-            IComponentTemplate template = new ComponentTemplate { Title = attr.ComponentTemplateName };
-            IFieldSet metadataFields;
-            IFieldSet fields = CreateFields(viewModel, type, template, out metadataFields);
-            //TODO: Move these to another class or something
-            MockHelper.AddXpathToFields(fields, "tcm:Content/custom:Content");
-            MockHelper.AddXpathToFields(metadataFields, "tcm:Metadata/custom:Metadata");
-
-            IComponentPresentation result = new ComponentPresentation
-            {
-                Component = new Component
-                {
-                    Fields = (FieldSet)fields,
-                    MetadataFields = (FieldSet)metadataFields,
-                    Schema = new Schema { Title = attr.SchemaName }
-                },
-                ComponentTemplate = (ComponentTemplate)template
-            };
-            return result;
-        }
-
-        public IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName)
-        {
-            Type type = viewModel.GetType();
-            ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
-            IComponentTemplate template = new ComponentTemplate { Title = attr.ComponentTemplateName };
-            IFieldSet metadataFields;
-            schemaName = attr.SchemaName;
-            return CreateFields(viewModel, type, template, out metadataFields);
-        }
         #endregion
 
-       
-
         #region Private methods
-        private IFieldSet CreateFields(object viewModel, Type type, IComponentTemplate template, out IFieldSet metadataFields)
-        {
-            IFieldSet fields;
-            IFieldSet contentFields = new FieldSet();
-            metadataFields = new FieldSet();
-            var props = ReflectionCache.GetFieldProperties(type);
-            Field field = new Field();
-            FieldAttributeBase fieldAttribute;
-            object fieldValue = null;
-            foreach (var prop in props)
-            {
-                fieldAttribute = prop.FieldAttribute;//prop.GetCustomAttributes(typeof(FieldAttributeBase), true).FirstOrDefault() as FieldAttributeBase;
-                if (fieldAttribute != null) //It has a FieldAttribute
-                {
-                    fields = fieldAttribute.IsMetadata ? metadataFields : contentFields; //switch between the two as needed
-                    if (contentFields != null)
-                    {
-                        //TODO: Check the property type and make sure it matches expected return type or throw an exception -- not sure this is worth it
-                        fieldValue = prop.Get(viewModel);
-                        if (fieldValue != null)
-                        {
-                            try
-                            {
-                                field = (Field)fieldAttribute.SetFieldValue(fieldValue, prop.PropertyType, this);
-                                field.Name = fieldAttribute.FieldName;
-                            }
-                            catch (Exception e)
-                            {
-                                if (e is TargetException || e is InvalidCastException)
-                                    throw new InvalidCastException(
-                                        String.Format("Type mismatch for property {0}. Expected type for {1} is {2}. Property is of type {3}."
-                                        , prop.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, prop.PropertyType.FullName));
-                                else throw e;
-                            }
-                            fields.Add(fieldAttribute.FieldName, field);
-                        }
-                    }
-                }
-            }
-            return contentFields;
-        }
-
         private void ProcessFields(IFieldSet contentFields, object viewModel, Type type, IComponentTemplate template, IFieldSet metadataFields = null)
         {
             //PropertyInfo[] props = type.GetProperties();
