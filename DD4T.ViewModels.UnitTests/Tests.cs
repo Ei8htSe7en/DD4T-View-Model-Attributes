@@ -10,12 +10,48 @@ using DD4T.ViewModels.Lists;
 using DD4T.ViewModels.Builders;
 using System.Reflection;
 using DD4T.ViewModels.XPM;
+using System.Web;
+using System.Web.Routing;
+using System.IO;
+using DD4T.Mvc.SiteEdit;
 
 namespace DD4T.ViewModels.UnitTests
 {
     [TestClass]
     public class Examples
     {
+        private Random r = new Random();
+        [TestInitialize]
+        public void Init()
+        {
+            //Mock up Current HttpContext so we can use Site Edit
+            HttpContext.Current = new HttpContext(
+                new HttpRequest("", "http://ei8htSe7en.io", "num=" + GetRandom()),
+                new HttpResponse(new StringWriter())
+                ){};
+            MockSiteEdit("1", false);
+        }
+        public void MockSiteEdit(string pubId, bool enabled)
+        {
+            //Mock up Site Edit Settings for Pub ID 1
+            SiteEditService.SiteEditSettings.Enabled = enabled;
+            if (!SiteEditService.SiteEditSettings.ContainsKey(pubId))
+            {
+                SiteEditService.SiteEditSettings.Add(pubId,
+                   new SiteEditSetting
+                   {
+                       Enabled = enabled,
+                       ComponentPublication = pubId,
+                       ContextPublication = pubId,
+                       PagePublication = pubId,
+                       PublishPublication = pubId
+                   });
+            }
+        }
+        private int GetRandom()
+        {
+            return r.Next(0, 101);
+        }
         [TestMethod]
         public void TestBuildCPViewModelGeneric()
         {
@@ -50,6 +86,8 @@ namespace DD4T.ViewModels.UnitTests
             ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
             var titleMarkup = model.XpmMarkupFor(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
+            //make sure the nested component gets a mock ID - used to test if site edit is enabled for component
+            ((Component)((GeneralContentViewModel)model.Content[0]).ComponentPresentation.Component).Id = "tcm:1-555-16";
             var markup = ((GeneralContentViewModel)model.Content[0]).XpmMarkupFor(m => m.Body);
             var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmMarkupFor(m => m.LinkText);
             Assert.IsNotNull(markup);
@@ -59,9 +97,10 @@ namespace DD4T.ViewModels.UnitTests
         public void TestEditableField()
         {
             ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            MvcHtmlString contentMarkup;            
             foreach (var content in model.Content)
             {
-                model.XpmEditableField(m => m.Content, content);
+                contentMarkup = model.XpmEditableField(m => m.Content, content);
             }
             var titleMarkup = model.XpmEditableField(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
@@ -71,25 +110,6 @@ namespace DD4T.ViewModels.UnitTests
             Assert.IsNotNull(markup);
         }
 
-        
-        [TestMethod]
-        public void TestFieldForExtension()
-        {
-            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
-            var titleField = model.FieldFor(m => m.Title);
-            var compMarkup = model.ComponentPresentation.Component;
-            IField markup = null;
-            IField embeddedTest = null;
-            foreach (var content in model.Content)
-            {
-                markup = content.FieldFor(m => m.Body);
-            }
-            foreach (var link in model.Links)
-            {
-                embeddedTest = link.FieldFor(m => m.InternalLink);
-            }
-            Assert.IsNotNull(markup);
-        }
         [TestMethod]
         public IComponentPresentation TestMockup()
         {
@@ -100,10 +120,10 @@ namespace DD4T.ViewModels.UnitTests
                 {
                     new GeneralContentViewModel
                     {
-                        Body = new MvcHtmlString("<p>" + r.Next(0,100) + "</p>"),
-                        Title = "The title" + r.Next(0,100),
-                        SubTitle = "The sub title"+ r.Next(0,100),
-                        NumberFieldExample = r.Next(0,100),
+                        Body = new MvcHtmlString("<p>" + GetRandom() + "</p>"),
+                        Title = "The title" + GetRandom(),
+                        SubTitle = "The sub title"+ GetRandom(),
+                        NumberFieldExample = GetRandom(),
                         ShowOnTop = true
                     }
                 },
@@ -111,10 +131,10 @@ namespace DD4T.ViewModels.UnitTests
                 {
                     new EmbeddedLinkViewModel
                     {
-                        LinkText = "I am a link " + r.Next(0,100),
+                        LinkText = "I am a link " + GetRandom(),
                         ExternalLink = "http://google.com",
-                        InternalLink = new Component { Id = r.Next(0,100).ToString() },
-                        Target = "_blank" + r.Next(0,100)
+                        InternalLink = new Component { Id = GetRandom().ToString() },
+                        Target = "_blank" + GetRandom()
                     }
                 },
                 Title = "I am a content container!"

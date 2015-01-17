@@ -7,39 +7,16 @@ using DD4T.ViewModels.Contracts;
 using DD4T.ViewModels.Attributes;
 using DD4T.ViewModels.Reflection;
 using System.Reflection;
+using System.Web;
 
 namespace DD4T.ViewModels.Mocking
 {
-    public static class MockHelper
-    {
-        public static void AddXpathToFields(IFieldSet fieldSet, string baseXpath)
-        {
-            // add XPath properties to all fields
-            try
-            {
-                foreach (Field f in fieldSet.Values)
-                {
-                    f.XPath = string.Format("{0}/custom:{1}", baseXpath, f.Name);
-                    int i = 1;
-                    if (f.EmbeddedValues != null)
-                    {
-                        foreach (FieldSet subFields in f.EmbeddedValues)
-                        {
-                            AddXpathToFields(subFields, string.Format("{0}/custom:{1}[{2}]", baseXpath, f.Name, i++));
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
-    }
-
     public class ComponentPresentationMocker : IComponentPresentationMocker
     {
-        internal ComponentPresentationMocker() { }
+        internal ComponentPresentationMocker() 
+        { 
+             
+        }
         public IComponentPresentation ConvertToComponentPresentation(IDD4TViewModel viewModel) //For mocking DD4T objects
         {
             Type type = viewModel.GetType();
