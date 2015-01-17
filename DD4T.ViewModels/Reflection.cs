@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 
-namespace DD4T.ViewModels
+namespace DD4T.ViewModels.Reflection
 {
     public class ReflectionCache
     {
@@ -124,12 +124,41 @@ namespace DD4T.ViewModels
                             typeof(object));
             return Expression.Lambda<Func<object, object>>(getterCall, obj).Compile();
         }
+        public static PropertyInfo GetPropertyInfo<TSource, TProperty>(Expression<Func<TSource, TProperty>> propertyLambda)
+        {
+            //Type type = typeof(TSource);
+
+            MemberExpression member = propertyLambda.Body as MemberExpression;
+            if (member == null)
+                throw new ArgumentException(string.Format(
+                    "Expression '{0}' refers to a method, not a property.",
+                    propertyLambda.ToString()));
+
+            PropertyInfo propInfo = member.Member as PropertyInfo;
+            if (propInfo == null)
+                throw new ArgumentException(string.Format(
+                    "Expression '{0}' refers to a field, not a property.",
+                    propertyLambda.ToString()));
+
+            //Commented this out because it uses reflection
+            //if (type != propInfo.ReflectedType &&
+            //    !type.IsSubclassOf(propInfo.ReflectedType))
+            //    throw new ArgumentException(string.Format(
+            //        "Expression '{0}' refers to a property that is not from type {1}.",
+            //        propertyLambda.ToString(),
+            //        type));
+
+            return propInfo;
+        }
+        public static PropertyInfo GetPropertyInfo<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
+        {
+            return GetPropertyInfo<TSource, TProperty>(propertyLambda);
+        }
     }
 
     public struct FieldAttributeProperty
     {
         public string Name { get; set; }
-        public string FullName { get; set; }
         public Action<object, object> Set { get; set; }
         public Func<object, object> Get { get; set; }
         public FieldAttributeBase FieldAttribute { get; set; }

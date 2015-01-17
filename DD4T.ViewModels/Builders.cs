@@ -6,10 +6,11 @@ using System.Text;
 using DD4T.ContentModel;
 using System.Reflection;
 using DD4T.ViewModels.Attributes;
-using DD4T.Utils;
 using DD4T.Mvc.Html;
 using System.Web.Mvc;
 using DD4T.ViewModels.Exceptions;
+using DD4T.ViewModels.Reflection;
+using DD4T.ViewModels.Mocking;
 
 namespace DD4T.ViewModels.Builders
 {
@@ -117,15 +118,17 @@ namespace DD4T.ViewModels.Builders
             ProcessFields(embeddedFields, viewModel, type, template);
             return viewModel;
         }
-        #endregion
-
-        public IComponentPresentation BuildCPFromViewModel(IComponentPresentationViewModel viewModel) //For mocking DD4T objects
+        public IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel) //For mocking DD4T objects
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
             IComponentTemplate template = new ComponentTemplate { Title = attr.ComponentTemplateName };
             IFieldSet metadataFields;
             IFieldSet fields = CreateFields(viewModel, type, template, out metadataFields);
+            //TODO: Move these to another class or something
+            MockHelper.AddXpathToFields(fields, "tcm:Content/custom:Content");
+            MockHelper.AddXpathToFields(metadataFields, "tcm:Metadata/custom:Metadata");
+
             IComponentPresentation result = new ComponentPresentation
             {
                 Component = new Component
@@ -139,7 +142,7 @@ namespace DD4T.ViewModels.Builders
             return result;
         }
 
-        public IFieldSet BuildEmbeddedFieldsFromViewModel(IEmbeddedSchemaViewModel viewModel, out string schemaName)
+        public IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName)
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
@@ -148,6 +151,9 @@ namespace DD4T.ViewModels.Builders
             schemaName = attr.SchemaName;
             return CreateFields(viewModel, type, template, out metadataFields);
         }
+        #endregion
+
+       
 
         #region Private methods
         private IFieldSet CreateFields(object viewModel, Type type, IComponentTemplate template, out IFieldSet metadataFields)
@@ -156,7 +162,7 @@ namespace DD4T.ViewModels.Builders
             IFieldSet contentFields = new FieldSet();
             metadataFields = new FieldSet();
             var props = ReflectionCache.GetFieldProperties(type);
-            IField field = new Field();
+            Field field = new Field();
             FieldAttributeBase fieldAttribute;
             object fieldValue = null;
             foreach (var prop in props)
@@ -173,7 +179,8 @@ namespace DD4T.ViewModels.Builders
                         {
                             try
                             {
-                                field = fieldAttribute.SetFieldValue(fieldValue, prop.PropertyType, this);
+                                field = (Field)fieldAttribute.SetFieldValue(fieldValue, prop.PropertyType, this);
+                                field.Name = fieldAttribute.FieldName;
                             }
                             catch (Exception e)
                             {
@@ -222,6 +229,7 @@ namespace DD4T.ViewModels.Builders
                                 throw new InvalidCastException(
                                     String.Format("Type mismatch for property {0}. Expected type for {1} is {2}. Property is of type {3}."
                                     , prop.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, prop.PropertyType.FullName));
+                            else throw e;
                         }
                     }
                 }

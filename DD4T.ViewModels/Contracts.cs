@@ -8,20 +8,6 @@ using System.Web.Mvc;
 
 namespace DD4T.ViewModels.Contracts
 {
-    [Obsolete("Enums no longer used. Use inheritance of base FieldAttribute class instead.")]
-    public enum SchemaFieldType
-    {
-        //TODO: Add more options. Alternatively can extend FieldAttribute
-        ComponentLink,
-        MultimediaLink,
-        Text,
-        RichText,
-        Number,
-        Date,
-        EmbeddedSchema,
-        Keyword,
-        KeywordKey
-    }
     public interface IDD4TViewModel
     {
         IViewModelBuilder Builder { get; set; }
@@ -39,21 +25,33 @@ namespace DD4T.ViewModels.Contracts
 
     public interface IViewModelBuilder
     {
-
         IComponentPresentationViewModel BuildCPViewModel(IComponentPresentation cp); //A way to build view model without passing type -- type is inferred using loaded assemblies
         IEmbeddedSchemaViewModel BuildEmbeddedViewModel(IFieldSet embeddedFields, ISchema schema, IComponentTemplate template);
         IComponentPresentationViewModel BuildCPViewModel(Type type, IComponentPresentation cp);
         IEmbeddedSchemaViewModel BuildEmbeddedViewModel(Type type, IFieldSet embeddedFields, IComponentTemplate template);
         T BuildCPViewModel<T>(IComponentPresentation cp) where T : class, IComponentPresentationViewModel;
         T BuildEmbeddedViewModel<T>(IFieldSet embeddedFields, IComponentTemplate template) where T : class, IEmbeddedSchemaViewModel;
-        IFieldSet BuildEmbeddedFieldsFromViewModel(IEmbeddedSchemaViewModel viewModel, out string schemaName);
-        IComponentPresentation BuildCPFromViewModel(IComponentPresentationViewModel viewModel);
+        IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName);
+        IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel);
         /// <summary>
         /// Loads all view model class types into the builder
         /// </summary>
         /// <param name="assembly"></param>
         void LoadViewModels(Assembly assembly);
     }
+
+    public interface IComponentPresentationMocker
+    {
+        IFieldSet ConvertToFieldSet(IEmbeddedSchemaViewModel viewModel, out string schemaName);
+        IComponentPresentation ConvertToComponentPresentation(IComponentPresentationViewModel viewModel);
+        void AddXpathToFields(IFieldSet fieldSet, string baseXpath);
+        string GetXmlRootName(IComponentPresentationViewModel viewModel);
+        string GetXmlRootName(IEmbeddedSchemaViewModel viewModel);
+        DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
+
+    }
+
+
     public interface ICanBeBoolean
     {
         bool IsBooleanValue { get; set; }

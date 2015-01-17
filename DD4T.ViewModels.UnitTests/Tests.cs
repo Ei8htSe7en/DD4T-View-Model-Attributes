@@ -9,6 +9,7 @@ using System.Web.Mvc;
 using DD4T.ViewModels.Lists;
 using DD4T.ViewModels.Builders;
 using System.Reflection;
+using DD4T.ViewModels.XPM;
 
 namespace DD4T.ViewModels.UnitTests
 {
@@ -23,27 +24,69 @@ namespace DD4T.ViewModels.UnitTests
             IViewModelBuilder builder = ViewModelCore.Builder;
             for (int i = 0; i < 10000; i++)
             {
-                IComponentPresentation cp = TestMocking();
+                IComponentPresentation cp = TestMockup();
                 model = builder.BuildCPViewModel<ContentContainerViewModel>(cp);
-                //builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
-                //builder.BuildCPViewModel(cp);
+            }
+            Assert.IsNotNull(model);
+        }
+        [TestMethod]
+        public void TestBuildCPViewModelLoadedAssemblies()
+        {
+
+            ContentContainerViewModel model = null;
+            IViewModelBuilder builder = ViewModelCore.Builder;
+            for (int i = 0; i < 10000; i++)
+            {
+                IComponentPresentation cp = TestMockup();
+                builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
+                model = (ContentContainerViewModel)builder.BuildCPViewModel(cp);
             }
             Assert.IsNotNull(model);
         }
 
         [TestMethod]
-        public IComponentPresentation TestMocking()
+        public void TestXPM()
         {
+            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            var titleMarkup = model.XpmMarkupFor(m => m.Title);
+            var compMarkup = model.StartXpmEditingZone();
+            var markup = ((GeneralContentViewModel)model.Content[0]).XpmMarkupFor(m => m.Body);
+            
+            //for (int i = 0; i < 10000; i++)
+            //{
+                
+            //}
+            Assert.IsNotNull(markup);
+        }
+
+        
+        [TestMethod]
+        public void TestFieldForExtension()
+        {
+            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            var titleField = model.FieldFor(m => m.Title);
+            var compMarkup = model.ComponentPresentation.Component;
+            IField markup = null;
+            foreach (var content in model.Content)
+            {
+                markup = content.FieldFor(m => m.Body);
+            }
+            Assert.IsNotNull(markup);
+        }
+        [TestMethod]
+        public IComponentPresentation TestMockup()
+        {
+            Random r = new Random();
             ContentContainerViewModel model = new ContentContainerViewModel
             {
                 Content = new ComponentViewModelList<GeneralContentViewModel>
                 {
                     new GeneralContentViewModel
                     {
-                        Body = new MvcHtmlString("<p>hello world</p>"),
-                        Title = "The title",
-                        SubTitle = "The sub title",
-                        NumberFieldExample = 5,
+                        Body = new MvcHtmlString("<p>" + r.Next(0,100) + "</p>"),
+                        Title = "The title" + r.Next(0,100),
+                        SubTitle = "The sub title"+ r.Next(0,100),
+                        NumberFieldExample = r.Next(0,100),
                         ShowOnTop = true
                     }
                 },
@@ -51,15 +94,17 @@ namespace DD4T.ViewModels.UnitTests
                 {
                     new EmbeddedLinkViewModel
                     {
-                        LinkText = "I am a link",
+                        LinkText = "I am a link " + r.Next(0,100),
                         ExternalLink = "http://google.com",
-                        InternalLink = new Component { Id = "tcm:1-123-16" },
-                        Target = "_blank"
+                        InternalLink = new Component { Id = r.Next(0,100).ToString() },
+                        Target = "_blank" + r.Next(0,100)
                     }
                 },
                 Title = "I am a content container!"
             };
-            IComponentPresentation cp = ViewModelCore.Builder.BuildCPFromViewModel(model);
+
+            IComponentPresentation cp = ViewModelCore.Builder.ConvertToComponentPresentation(model);
+            ((Component)cp.Component).Id = "tcm:1-23-16";
             Assert.IsNotNull(cp);
             return cp;
         }

@@ -7,6 +7,7 @@ using DD4T.ContentModel;
 using System.Reflection;
 using DD4T.Mvc.Html;
 using System.Web.Mvc;
+using DD4T.ViewModels.Reflection;
 
 namespace DD4T.ViewModels.Attributes
 {
@@ -141,14 +142,14 @@ namespace DD4T.ViewModels.Attributes
                         IList<IComponentPresentationViewModel> list = (IList<IComponentPresentationViewModel>)value;
                         foreach (var model in list)
                         {
-                            field.LinkedComponentValues.Add((Component)builder.BuildCPFromViewModel(model).Component);
+                            field.LinkedComponentValues.Add((Component)builder.ConvertToComponentPresentation(model).Component);
                         }
                     }
                 }
                 else
                 {
                     field.LinkedComponentValues.Add(linkedComponentTypes == null ? (Component)value
-                        : (Component)builder.BuildCPFromViewModel((IComponentPresentationViewModel)value).Component);
+                        : (Component)builder.ConvertToComponentPresentation((IComponentPresentationViewModel)value).Component);
                 }
             }
             return field;
@@ -260,14 +261,14 @@ namespace DD4T.ViewModels.Attributes
 
                         foreach (var model in list)
                         {
-                            field.EmbeddedValues.Add((FieldSet)builder.BuildEmbeddedFieldsFromViewModel(model, out schemaName));
+                            field.EmbeddedValues.Add((FieldSet)builder.ConvertToFieldSet(model, out schemaName));
                         }
                     }
                 }
                 else
                 {
                     field.EmbeddedValues.Add(embeddedSchemaType == null ? (FieldSet)value
-                        : (FieldSet)builder.BuildEmbeddedFieldsFromViewModel((IEmbeddedSchemaViewModel)value, out schemaName));
+                        : (FieldSet)builder.ConvertToFieldSet((IEmbeddedSchemaViewModel)value, out schemaName));
                 }
                 field.EmbeddedSchema = new Schema { Title = schemaName };
             }

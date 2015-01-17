@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<siteEdit enabled="true" style="SiteEdit2012" tridionHostUrl="http://cms.sodexomyway.net">
+  <contextPublications>
+    <contextPublication id="1" componentPublication="1" pagePublication="1" publishPublication="1" />
+  </contextPublications>
+</siteEdit>
