@@ -61,7 +61,7 @@ namespace DD4T.ViewModels.UnitTests
             ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
             foreach (var content in model.Content)
             {
-                model.XpmEditableField(m => m.Content, 0);
+                model.XpmEditableField(m => m.Content, content);
             }
             var titleMarkup = model.XpmEditableField(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
@@ -128,7 +128,6 @@ namespace DD4T.ViewModels.UnitTests
 
     }
 
-    [TestClass]
     [ViewModel("GeneralContent")]
     public class GeneralContentViewModel : ComponentPresentationViewModelBase
     {
@@ -147,7 +146,6 @@ namespace DD4T.ViewModels.UnitTests
         [NumberField("someNumber")]
         public double NumberFieldExample { get; set; }
     }
-    [TestClass]
     [ViewModel("ContentContainer")]
     public class ContentContainerViewModel : ComponentPresentationViewModelBase
     {
@@ -161,7 +159,6 @@ namespace DD4T.ViewModels.UnitTests
         public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }
 
     }
-    [TestClass]
     [ViewModel("EmbeddedLink")]
     public class EmbeddedLinkViewModel : EmbeddedSchemaViewModelBase
     {

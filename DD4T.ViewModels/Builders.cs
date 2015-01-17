@@ -14,11 +14,13 @@ using DD4T.ViewModels.Mocking;
 
 namespace DD4T.ViewModels.Builders
 {
-
+    /// <summary>
+    /// Static container class for View Model singletons
+    /// </summary>
     public static class ViewModelCore
     {
         private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(); //singleton
-        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(); //TODO: Implement
+        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(); //singleton
         public static IViewModelBuilder Builder { get { return viewModelBuilder; } }
         public static IComponentPresentationMocker Mocker { get { return mocker; } }
     }

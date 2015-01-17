@@ -11,6 +11,9 @@ using DD4T.ViewModels.Reflection;
 
 namespace DD4T.ViewModels.Attributes
 {
+    /// <summary>
+    /// The Base class for all DD4T Field Attributes. Inherit this class to create custom attributes for decorating Domain View Models.
+    /// </summary>
     public abstract class FieldAttributeBase : Attribute
     {
         protected readonly string fieldName;
@@ -18,14 +21,45 @@ namespace DD4T.ViewModels.Attributes
         protected bool inlineEditable = false;
         protected bool mandatory = false; //probably don't need this one
         protected bool isMetadata = false;
+        /// <summary>
+        /// Base Constructor
+        /// </summary>
+        /// <param name="fieldName">The Tridion schema field name for this property</param>
         public FieldAttributeBase(string fieldName)
         {
             this.fieldName = fieldName;
         }
+        /// <summary>
+        /// When overriden in a derived class, this method should return the value of the View Model property from a DD4T Field object
+        /// </summary>
+        /// <param name="field">The DD4T Field</param>
+        /// <param name="propertyType">The concrete type of the view model property for this attribute</param>
+        /// <param name="template">The Component Template to use</param>
+        /// <param name="builder">The View Model Builder</param>
+        /// <returns></returns>
         public abstract object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null);
-        public abstract IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null);
+        /// <summary>
+        /// When overriden in a derived class, this method should return a DD4T field with the value appropriately set.
+        /// </summary>
+        /// <remarks>Used for mocking Component Presentation objects</remarks>
+        /// <param name="value">Value of the property</param>
+        /// <param name="propertyType">Concrete type of the property</param>
+        /// <param name="mocker">Component Presentation Mocker</param>
+        /// <returns></returns>
+        public abstract IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker mocker = null);
+        /// <summary>
+        /// When overriden in a derived class, this property returns the expected return type of the View Model property.
+        /// </summary>
+        /// <remarks>Primarily used for debugging purposes. This property is used to throw an accurate exception at run time if
+        /// the property return type does not match with the expected type.</remarks>
         public abstract Type ExpectedReturnType { get; }
+        /// <summary>
+        /// The Tridion schema field name for this property
+        /// </summary>
         public string FieldName { get { return fieldName; } }
+        /// <summary>
+        /// Is a multi value field.
+        /// </summary>
         public bool AllowMultipleValues
         {
             get
@@ -34,6 +68,9 @@ namespace DD4T.ViewModels.Attributes
             }
             set { allowMultipleValues = value; }
         }
+        /// <summary>
+        /// Is inline editable. For semantic use only.
+        /// </summary>
         public bool InlineEditable
         {
             get
@@ -45,6 +82,9 @@ namespace DD4T.ViewModels.Attributes
                 inlineEditable = value;
             }
         }
+        /// <summary>
+        /// Is a mandatory field. For semantic use only.
+        /// </summary>
         public bool Mandatory
         {
             get
@@ -56,6 +96,9 @@ namespace DD4T.ViewModels.Attributes
                 mandatory = value;
             }
         }
+        /// <summary>
+        /// Is a metadata field. False indicates this is a content field.
+        /// </summary>
         public bool IsMetadata
         {
             get { return isMetadata; }
@@ -73,17 +116,31 @@ namespace DD4T.ViewModels.Attributes
     //}
 
     /// <summary>
-    /// Attribute for a Component Link Field
+    /// A Component Link Field
     /// </summary>
+    /// <example>
+    /// To create a multi value linked component with a custom return Type:
+    ///     [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
+    ///     public ViewModelList<GeneralContentViewModel> Content { get; set; }
+    ///     
+    /// To create a single linked component using the default DD4T type:
+    ///     [LinkedComponentField("internalLink")]
+    ///     public IComponent InternalLink { get; set; }
+    /// </example>
     public class LinkedComponentFieldAttribute : FieldAttributeBase
     {
         protected Type[] linkedComponentTypes;
 
         /// <summary>
-        /// 
+        /// A Linked Component Field
         /// </summary>
-        /// <param name="fieldName"></param>
+        /// <param name="fieldName">Tridion schema field name</param>
         public LinkedComponentFieldAttribute(string fieldName) : base(fieldName) { }
+        /// <summary>
+        /// The possible return types for this linked component field. Each of these types must implement the 
+        /// return type of this property or its generic type if multi-value. If not used, the default DD4T
+        /// Component object will be returned.
+        /// </summary>
         public Type[] LinkedComponentTypes //Is there anyway to enforce the types passed to this?
         {
             get
@@ -168,7 +225,6 @@ namespace DD4T.ViewModels.Attributes
                 }
             }
         }
-
         private IComponentPresentationViewModel BuildLinkedComponent(IComponent component, IComponentTemplate template, IViewModelBuilder builder)
         {
             IComponentPresentation linkedCp = new ComponentPresentation
@@ -181,8 +237,7 @@ namespace DD4T.ViewModels.Attributes
             //linkedModel = BuildCPViewModel(linkedType, linkedCp);
             return builder.BuildCPViewModel(type, linkedCp);
         }
-
-        public Type GetViewModelType(ISchema schema, IComponentTemplate template = null)
+        private Type GetViewModelType(ISchema schema, IComponentTemplate template = null)
         {
             //Create some algorithm to determine the proper view model type, perhaps build a static collection of all Types with the
             //View Model Attribute and set the key to the schema name + template name?
@@ -203,9 +258,17 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// An embedded schema field
+    /// </summary>
     public class EmbeddedSchemaFieldAttribute : FieldAttributeBase
     {
         protected Type embeddedSchemaType;
+        /// <summary>
+        /// Embedded Schema Field
+        /// </summary>
+        /// <param name="fieldName">The Tridion schema field name</param>
+        /// <param name="embeddedSchemaType">The View Model type for this embedded field set</param>
         public EmbeddedSchemaFieldAttribute(string fieldName, Type embeddedSchemaType)
             : base(fieldName)
         {
@@ -218,7 +281,7 @@ namespace DD4T.ViewModels.Attributes
                 return embeddedSchemaType;
             }
         }
-        public EmbeddedSchemaFieldAttribute(string fieldName) : base(fieldName) { }
+        //public EmbeddedSchemaFieldAttribute(string fieldName) : base(fieldName) { }
         public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
@@ -280,6 +343,9 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// A Multimedia component field
+    /// </summary>
     public class MultimediaFieldAttribute : FieldAttributeBase
     {
         public MultimediaFieldAttribute(string fieldName) : base(fieldName) { }
@@ -312,6 +378,9 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// A text field
+    /// </summary>
     public class TextFieldAttribute : FieldAttributeBase, ICanBeBoolean
     {
         public TextFieldAttribute(string fieldName) : base(fieldName) { }
@@ -353,6 +422,9 @@ namespace DD4T.ViewModels.Attributes
             }
             return field;
         }
+        /// <summary>
+        /// Set to true to parse the text into a boolean value.
+        /// </summary>
         public bool IsBooleanValue { get; set; }
         public override Type ExpectedReturnType
         {
@@ -365,6 +437,9 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// A Rich Text field
+    /// </summary>
     public class RichTextFieldAttribute : FieldAttributeBase
     {
         public RichTextFieldAttribute(string fieldName) : base(fieldName) { }
@@ -400,6 +475,9 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// A Number field
+    /// </summary>
     public class NumberFieldAttribute : FieldAttributeBase
     {
         public NumberFieldAttribute(string fieldName) : base(fieldName) { }
@@ -435,7 +513,9 @@ namespace DD4T.ViewModels.Attributes
         }
 
     }
-
+    /// <summary>
+    /// A Date/Time field
+    /// </summary>
     public class DateFieldAttribute : FieldAttributeBase
     {
         public DateFieldAttribute(string fieldName) : base(fieldName) { }
@@ -470,7 +550,9 @@ namespace DD4T.ViewModels.Attributes
             get { return AllowMultipleValues ? typeof(IList<DateTime>) : typeof(DateTime); }
         }
     }
-
+    /// <summary>
+    /// A Keyword field
+    /// </summary>
     public class KeywordFieldAttribute : FieldAttributeBase
     {
         public KeywordFieldAttribute(string fieldName) : base(fieldName) { }
@@ -506,8 +588,15 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
+    /// <summary>
+    /// The Key of a Keyword field. 
+    /// </summary>
     public class KeywordKeyFieldAttribute : FieldAttributeBase, ICanBeBoolean
     {
+        /// <summary>
+        /// The Key of a Keyword field.
+        /// </summary>
+        /// <param name="fieldName">Tridion schema field name</param>
         public KeywordKeyFieldAttribute(string fieldName) : base(fieldName) { }
         public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
         {
@@ -547,6 +636,9 @@ namespace DD4T.ViewModels.Attributes
             }
             return field;
         }
+        /// <summary>
+        /// Set to true to parse the Keyword Key into a boolean value.
+        /// </summary>
         public bool IsBooleanValue { get; set; }
         public override Type ExpectedReturnType
         {
@@ -599,12 +691,19 @@ namespace DD4T.ViewModels.Attributes
         }
     }
 
-    //TODO: Allow multiple CT Names
+    //TODO: Use custom CT Metadata fields instead of CT Name
+    /// <summary>
+    /// A DD4T View Model.
+    /// </summary>
     public class ViewModelAttribute : Attribute
     {
         private string schemaName;
         private bool inlineEditable = false;
         private string componentTemplateName;
+        /// <summary>
+        /// DD4T View Model
+        /// </summary>
+        /// <param name="schemaName">Tridion schema name for component type for this View Model</param>
         public ViewModelAttribute(string schemaName)
         {
             this.schemaName = schemaName;
@@ -617,13 +716,17 @@ namespace DD4T.ViewModels.Attributes
                 return schemaName;
             }
         }
-
-        public string ComponentTemplateName
+        /// <summary>
+        /// The name of the Component Template. Use this to further specify a View model for specific presentations
+        /// </summary>
+        public string ComponentTemplateName //TODO: Use custom CT Metadata fields instead of CT Name
         {
             get { return componentTemplateName; }
             set { componentTemplateName = value; }
         }
-
+        /// <summary>
+        /// Is inline editable. Only for semantic use.
+        /// </summary>
         public bool InlineEditable
         {
             get

@@ -14,24 +14,41 @@ using System.Collections;
 
 namespace DD4T.ViewModels.XPM
 {
+    //TODO: Refactor and cut down code bloat in this class
     public static class XPM
     {
         #region public extension methods
         /// <summary>
-        /// Returns XPM Markup and Field Value 
+        /// Renders both XPM Markup and Field Value 
         /// </summary>
-        /// <typeparam name="TModel"></typeparam>
-        /// <typeparam name="TProp"></typeparam>
-        /// <param name="model"></param>
-        /// <param name="propertyLambda"></param>
-        /// <param name="index"></param>
-        /// <returns></returns>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="index">Optional index for a multi-value field</param>
+        /// <returns>XPM Markup and field value</returns>
         public static MvcHtmlString XpmEditableField<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
             var fieldProp = GetFieldProperty(propertyLambda);
             var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
             return SiteEditableField<TModel, TProp>(model, fields, fieldProp, index);
         }
+        /// <summary>
+        /// Renders both XPM Markup and Field Value for a multi-value field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <typeparam name="TItem">Item type - this must match the generic type of the property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="item">The particular value of the multi-value field</param>
+        /// <example>
+        /// foreach (var content in model.Content)
+        /// {
+        ///     @model.XpmEditableField(m => m.Content, content);
+        /// }
+        /// </example>
+        /// <returns>XPM Markup and field value</returns>
         public static MvcHtmlString XpmEditableField<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
             where TModel : IDD4TViewModel
         {
@@ -40,7 +57,15 @@ namespace DD4T.ViewModels.XPM
             var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
             return SiteEditableField<TModel, TProp>(model, fields, fieldProp, index);
         }
-        
+        /// <summary>
+        /// Renders the XPM markup for a field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="index">Optional index for a multi-value field</param>
+        /// <returns>XPM Markup</returns>
         public static MvcHtmlString XpmMarkupFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
             bool siteEditEnabled = true;
@@ -54,6 +79,23 @@ namespace DD4T.ViewModels.XPM
             }
             else return null;
         }
+        /// <summary>
+        /// Renders XPM Markup for a multi-value field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <typeparam name="TItem">Item type - this must match the generic type of the property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="item">The particular value of the multi-value field</param>
+        /// <example>
+        /// foreach (var content in model.Content)
+        /// {
+        ///     @model.XpmMarkupFor(m => m.Content, content);
+        ///     @content;
+        /// }
+        /// </example>
+        /// <returns>XPM Markup</returns>
         public static MvcHtmlString XpmMarkupFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) 
             where TModel : IDD4TViewModel
         {
@@ -69,7 +111,12 @@ namespace DD4T.ViewModels.XPM
             }
             else return null;   
         }
-        
+        /// <summary>
+        /// Renders the XPM Markup for a Component Presentation
+        /// </summary>
+        /// <param name="model">Model</param>
+        /// <param name="region">Region</param>
+        /// <returns>XPM Markup</returns>
         public static MvcHtmlString StartXpmEditingZone(this IComponentPresentationViewModel model, string region = null)
         {
             return new MvcHtmlString(SiteEditService.GenerateSiteEditComponentTag(model.ComponentPresentation, region));
@@ -158,6 +205,7 @@ namespace DD4T.ViewModels.XPM
         }
         #endregion
         //for testing only
+        [Obsolete]
         public static IField FieldFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
         {
             var fieldProp = GetFieldProperty(propertyLambda);
@@ -166,6 +214,7 @@ namespace DD4T.ViewModels.XPM
             var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
             return field;
         }
+        [Obsolete]
         public static IField FieldFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) where TModel : IDD4TViewModel
         {
             var fieldProp = GetFieldProperty(propertyLambda);
