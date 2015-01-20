@@ -176,7 +176,7 @@ namespace DD4T.ViewModels.UnitTests
             var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(cp);
             //test
             Assert.AreEqual(3, newModel.Links.Count);
-            Assert.AreEqual(cp.Component.Id,
+            Assert.AreEqual(cp.Component.Fields["links"].EmbeddedValues[0]["internalLink"].LinkedComponentValues[0].Id,
                 newModel.Links.FirstOrDefault<EmbeddedLinkViewModel>().InternalLink.Id);
         }
 
