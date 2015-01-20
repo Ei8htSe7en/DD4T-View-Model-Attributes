@@ -247,7 +247,7 @@ namespace DD4T.ViewModels.Attributes
             string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(template);
             ViewModelAttribute key = new ViewModelAttribute(schema.Title, false)
             {
-                ViewModelKeys = viewModelKey == null ? null : new string[] { viewModelKey }
+                ViewModelKeys = String.IsNullOrEmpty(viewModelKey) ? null : new string[] { viewModelKey }
             };
             foreach (var type in LinkedComponentTypes)
             {

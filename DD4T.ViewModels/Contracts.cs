@@ -122,8 +122,17 @@ namespace DD4T.ViewModels.Contracts
         DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
     }
 
+    /// <summary>
+    /// Provides the View Model Key using a Component Template
+    /// </summary>
     public interface IViewModelKeyProvider
     {
+        /// <summary>
+        /// Retrieves a View Model Key based on a Component Template. Should return the same key for the same template every time.
+        /// Return values of null or empty string will be ignored.
+        /// </summary>
+        /// <param name="template">Component Template</param>
+        /// <returns></returns>
         string GetViewModelKey(IComponentTemplate template);
     }
 

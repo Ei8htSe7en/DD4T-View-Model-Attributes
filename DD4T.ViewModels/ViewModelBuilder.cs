@@ -20,6 +20,10 @@ namespace DD4T.ViewModels
         private IDictionary<ViewModelAttribute, Type> viewModels = new Dictionary<ViewModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
         public  IViewModelKeyProvider keyProvider;
+        /// <summary>
+        /// New View Model Builder
+        /// </summary>
+        /// <param name="keyProvider">A View Model Key provider</param>
         public ViewModelBuilder(IViewModelKeyProvider keyProvider)
         {
             if (keyProvider == null) throw new ArgumentNullException("keyProvider");
@@ -161,7 +165,7 @@ namespace DD4T.ViewModels
         private string[] GetViewModelId(IComponentTemplate template)
         {
             string key = keyProvider.GetViewModelKey(template);
-            return key == null ? null : new string[] { key };
+            return String.IsNullOrEmpty(key) ? null : new string[] { key };
         }
         #endregion
     }
