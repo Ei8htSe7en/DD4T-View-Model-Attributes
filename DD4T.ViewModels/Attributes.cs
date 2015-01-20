@@ -256,7 +256,8 @@ namespace DD4T.ViewModels.Attributes
                 if (modelAttr != null && key.Equals(modelAttr))
                     return type;
             }
-            throw new ViewModelTypeNotFoundExpception(schema.Title, viewModelKey);
+            return null; //no matching types found, return null
+            //throw new ViewModelTypeNotFoundExpception(schema.Title, viewModelKey);
         }
     }
 
