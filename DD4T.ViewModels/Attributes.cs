@@ -8,6 +8,7 @@ using System.Reflection;
 using DD4T.Mvc.Html;
 using System.Web.Mvc;
 using DD4T.ViewModels.Reflection;
+using DD4T.ViewModels.Exceptions;
 
 namespace DD4T.ViewModels.Attributes
 {
@@ -233,28 +234,29 @@ namespace DD4T.ViewModels.Attributes
                 ComponentTemplate = template as ComponentTemplate
             };
             //need to determine schema to choose the Type
-            Type type = GetViewModelType(component.Schema, template);
+            Type type = GetViewModelType(component.Schema, builder, template);
             //linkedModel = BuildCPViewModel(linkedType, linkedCp);
             return builder.BuildCPViewModel(type, linkedCp);
         }
-        private Type GetViewModelType(ISchema schema, IComponentTemplate template = null)
+        private Type GetViewModelType(ISchema schema, IViewModelBuilder builder, IComponentTemplate template = null)
         {
             //Create some algorithm to determine the proper view model type, perhaps build a static collection of all Types with the
             //View Model Attribute and set the key to the schema name + template name?
             if (schema == null) throw new ArgumentNullException("schema");
             //string ctName;
+            string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(template);
+            ViewModelAttribute key = new ViewModelAttribute(schema.Title, true)
+            {
+                ViewModelKeys = viewModelKey == null ? null : new string[] { viewModelKey }
+            };
             foreach (var type in LinkedComponentTypes)
             {
                 ViewModelAttribute modelAttr = ReflectionCache.GetViewModelAttribute(type);
-                if (modelAttr != null && schema.Title == modelAttr.SchemaName) return type;
 
-                //TODO: Possible include another type of marker besides CT to differentiate between different view models when using different template
-                //ctName = template == null ? null : template.Title;
-                //Compare CT and Schema -- this won't work for re-using component view models as both linked components and CPs until we have multiple CT names in attribute
-                //if (modelAttr != null && new ViewModelKey(schema.Title, ctName).Equals(
-                //    new ViewModelKey(modelAttr.SchemaName, modelAttr.ComponentTemplateName))) return type; 
+                if (modelAttr != null && key.Equals(modelAttr))
+                    return type;
             }
-            return null;
+            throw new ViewModelTypeNotFoundExpception(schema.Title, viewModelKey);
         }
     }
 
@@ -706,6 +708,8 @@ namespace DD4T.ViewModels.Attributes
         /// DD4T View Model
         /// </summary>
         /// <param name="schemaName">Tridion schema name for component type for this View Model</param>
+        /// <param name="isDefault">Is this the default View Model for this schema. If true, Components
+        /// with this schema will use this class if no other View Models' Keys match.</param>
         public ViewModelAttribute(string schemaName, bool isDefault)
         {
             this.schemaName = schemaName;
@@ -777,10 +781,14 @@ namespace DD4T.ViewModels.Attributes
                     if (this.SchemaName == key.SchemaName && match.Count() > 0)
                         return true;
                 }
+                //Note: if the parent of a linked component is using a View Model Key, the View Model
+                //for that linked component must either be Default with no View Model Keys, or it must
+                //have the View Model Key of the parent View Model
                 if (((this.ViewModelKeys == null || this.ViewModelKeys.Length == 0) && key.IsDefault) //this set of IDs is empty and the input is default
                     || ((key.ViewModelKeys == null || key.ViewModelKeys.Length == 0) && this.IsDefault)) //input set of IDs is empty and this is default
+                //if (key.IsDefault || this.IsDefault) //Fall back to default if the view model key isn't found -- useful for linked components
                 {
-                    //if either one doesn't have a ViewModelIds and the other is a default, just compare Schemas
+                    //Just compare the schema names
                     return this.SchemaName == key.SchemaName;
                 }
             }

@@ -19,13 +19,14 @@ namespace DD4T.ViewModels
     {
         private IDictionary<ViewModelAttribute, Type> viewModels = new Dictionary<ViewModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
-        private IViewModelKeyProvider keyProvider;
+        public  IViewModelKeyProvider keyProvider;
         public ViewModelBuilder(IViewModelKeyProvider keyProvider)
         {
             if (keyProvider == null) throw new ArgumentNullException("keyProvider");
             this.keyProvider = keyProvider;
         }
         #region IViewModelBuilder
+        public IViewModelKeyProvider ViewModelKeyProvider { get { return keyProvider; } }
         /// <summary>
         /// Loads View Model Types from an Assembly. Use minimally due to reflection overhead.
         /// </summary>
@@ -77,9 +78,7 @@ namespace DD4T.ViewModels
             }
             else
             {
-                throw new ViewModelTypeNotFoundExpception(
-                    String.Format("Could not find view model for schema '{0}' and View Model ID '{1}' or default for schema '{0}' in loaded assemblies."
-                    , key.SchemaName, key.ViewModelKeys.FirstOrDefault()));
+                throw new ViewModelTypeNotFoundExpception(key.SchemaName, key.ViewModelKeys.FirstOrDefault());
             }
             return result;
         }
@@ -106,9 +105,7 @@ namespace DD4T.ViewModels
             }
             else
             {
-                throw new ViewModelTypeNotFoundExpception(
-                    String.Format("Could not find view model for schema {0} and ID {1} in loaded assemblies."
-                    , key.SchemaName, key.ViewModelKeys.FirstOrDefault()));
+                throw new ViewModelTypeNotFoundExpception(key.SchemaName, key.ViewModelKeys.FirstOrDefault());
             }
             return result;
         }

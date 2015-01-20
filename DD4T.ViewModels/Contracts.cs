@@ -80,7 +80,10 @@ namespace DD4T.ViewModels.Contracts
         /// <param name="template">Component Template to use for generating XPM Markup for any linked components</param>
         /// <returns>Embedded Schema View Model</returns>
         T BuildEmbeddedViewModel<T>(IFieldSet embeddedFields, IComponentTemplate template) where T : class, IEmbeddedSchemaViewModel;
-
+        /// <summary>
+        /// The View Model Key Provider for this Builder
+        /// </summary>
+        IViewModelKeyProvider ViewModelKeyProvider { get; }
         /// <summary>
         /// Loads all View Model classes from an assembly
         /// </summary>
