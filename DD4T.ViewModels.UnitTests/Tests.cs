@@ -338,7 +338,7 @@ namespace DD4T.ViewModels.UnitTests
         public string Title { get; set; }
     }
 
-    [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent" })]
+    [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent", "Test" })]
     public class GeneralContentViewModel : ComponentPresentationViewModelBase
     {
         [TextField("title")]
@@ -357,7 +357,7 @@ namespace DD4T.ViewModels.UnitTests
         public double NumberFieldExample { get; set; }
     }
 
-    [ViewModel("ContentContainer", true)]
+    [ViewModel("ContentContainer", true, ViewModelKeys = new string[] { "Test" })]
     public class ContentContainerViewModel : ComponentPresentationViewModelBase
     {
         [TextField("title", InlineEditable = true)]

@@ -8,7 +8,7 @@ namespace DD4T.ViewModels.Exceptions
     public class ViewModelTypeNotFoundExpception : Exception
     {
         public ViewModelTypeNotFoundExpception(string schemaName, string viewModelKey)
-            : base(String.Format("Could not find view model for schema {0} and ID {1} in loaded assemblies."
+            : base(String.Format("Could not find view model for schema '{0}' and key '{1}' or default for schema '{0}' in loaded assemblies."
                     , schemaName, viewModelKey)) 
         { }
     }
