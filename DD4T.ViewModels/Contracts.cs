@@ -1,4 +1,5 @@
 ﻿using DD4T.ContentModel;
+using DD4T.ViewModels.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -118,6 +119,15 @@ namespace DD4T.ViewModels.Contracts
         DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
     }
 
+    public interface IViewModelKeyProvider
+    {
+        string GetViewModelKey(IComponentTemplate template);
+    }
+
+    public interface ICTMocker
+    {
+        IComponentTemplate GetComponentTemplate(ViewModelAttribute viewModelAttribute);
+    }
 
     public interface ICanBeBoolean
     {
@@ -195,40 +205,43 @@ namespace DD4T.ViewModels.Contracts
             }
         }
     }
+    [Obsolete]
     /// <summary>
     /// Data structure for uniquely identifying View Models
     /// </summary>
-    internal struct ViewModelKey
+    internal struct ViewModelEntry
     {
-        private string schemaName;
-        private string componentTemplateName;
-        public string SchemaName { get { return schemaName; } }
-        public string ComponentTemplateName { get { return componentTemplateName; } }
-        
-        public ViewModelKey(string schemaName, string componentTemplateName)
-        {
-            this.schemaName = schemaName;
-            this.componentTemplateName = componentTemplateName;
-        }
+        public string SchemaName { get; set; }
+        public string[] ViewModelIds { get; set; }
+        public bool IsDefault { get; set; }
+        public ViewModelAttribute ViewModelAttribute { get; set; }
         public override int GetHashCode()
         {
             //Does the hash code ever change? can we store this in the constructor?
-            return (schemaName + componentTemplateName).GetHashCode();
+            string viewModelKey = ViewModelIds == null || ViewModelIds.Length < 1 ? string.Empty : ViewModelIds.FirstOrDefault();
+            return (SchemaName + viewModelKey).GetHashCode();
         }
         public override bool Equals(object obj)
         {
-            if (obj != null && obj is ViewModelKey)
+            if (obj != null && obj is ViewModelEntry)
             {
-                ViewModelKey key = (ViewModelKey)obj;
-                if (this.ComponentTemplateName == null || key.ComponentTemplateName == null)
+                ViewModelEntry key = (ViewModelEntry)obj;
+                if (this.ViewModelIds != null && key.ViewModelIds != null)
                 {
-                    //if either one doesn't have a CT set, just compare Schemas
-                    return this.SchemaName == key.SchemaName;
+                    //if both have a ViewModelKey set, use both ViewModelKey and schema
+                    //Check for a match anywhere in both lists
+                    var match = from i in this.ViewModelIds
+                                join j in key.ViewModelIds
+                                on i equals j
+                                select i;
+                    //Schema names match and there is a matching view model ID
+                    return this.SchemaName == key.SchemaName && match.Count() > 0;
                 }
-                else if (this.ComponentTemplateName != null && key.ComponentTemplateName != null)
+                else if (((this.ViewModelIds == null || this.ViewModelIds.Length == 0) && key.IsDefault) //this set of IDs is empty and the input is default
+                    || ((key.ViewModelIds == null || key.ViewModelIds.Length == 0) && this.IsDefault)) //input set of IDs is empty and this is default
                 {
-                    //if both have a CT set, use both CT and schema
-                    return this.SchemaName == key.SchemaName && this.ComponentTemplateName == key.ComponentTemplateName;
+                    //if either one doesn't have a ViewModelIds and the other is a default, just compare Schemas
+                    return this.SchemaName == key.SchemaName;
                 }
             }
             return false;

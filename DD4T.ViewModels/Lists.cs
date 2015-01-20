@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace DD4T.ViewModels.Lists
+namespace DD4T.ViewModels
 {
     public class ViewModelList<T> : List<IDD4TViewModel>, IEnumerable<T> where T : IDD4TViewModel
     {

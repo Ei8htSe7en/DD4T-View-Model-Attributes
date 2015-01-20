@@ -11,6 +11,7 @@
     <AssemblyName>DD4T.ViewModels</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,37 +30,59 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DD4T.ContentModel">
-      <HintPath>..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.ContentModel.dll</HintPath>
+    <Reference Include="DD4T.ContentModel, Version=1.31.0.0, Culture=neutral, PublicKeyToken=4450e3c7f68bf872, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.ContentModel.dll</HintPath>
     </Reference>
-    <Reference Include="DD4T.ContentModel.Contracts">
-      <HintPath>..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.ContentModel.Contracts.dll</HintPath>
+    <Reference Include="DD4T.ContentModel.Contracts, Version=1.31.0.0, Culture=neutral, PublicKeyToken=4450e3c7f68bf872, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.ContentModel.Contracts.dll</HintPath>
     </Reference>
-    <Reference Include="DD4T.Mvc">
-      <HintPath>..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.Mvc.dll</HintPath>
+    <Reference Include="DD4T.Factories, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Factories.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.LogWrappers.Entlib">
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.LogWrappers.Entlib.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.LogWrappers.Log4Net">
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.LogWrappers.Log4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Mvc, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4T-MVC4.1.31.1\lib\DD4T.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Utils, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Web">
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Web.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Web.Mvc, Version=4.0.0.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Mvc, Version=4.0.0.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />
+    <Compile Include="ViewModelBuilder.cs" />
     <Compile Include="Contracts.cs" />
-    <Compile Include="Builders.cs" />
+    <Compile Include="Core.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="Lists.cs" />
     <Compile Include="Mocking.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reflection.cs" />
     <Compile Include="XPM.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

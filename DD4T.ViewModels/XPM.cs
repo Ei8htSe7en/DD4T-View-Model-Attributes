@@ -15,6 +15,9 @@ using System.Collections;
 namespace DD4T.ViewModels.XPM
 {
     //TODO: Refactor and cut down code bloat in this class
+    /// <summary>
+    /// Extension methods for rendering XPM Markup in conjuction with DD4T Domain View Models
+    /// </summary>
     public static class XPM
     {
         #region public extension methods

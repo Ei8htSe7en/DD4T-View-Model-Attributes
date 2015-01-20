@@ -9,25 +9,56 @@ using DD4T.ViewModels.Reflection;
 using System.Reflection;
 using System.Web;
 
-namespace DD4T.ViewModels.Mocking
+namespace DD4T.ViewModels
 {
-    public class ComponentPresentationMocker : IComponentPresentationMocker
+    public class CTMocker : ICTMocker
     {
-        internal ComponentPresentationMocker() 
-        { 
-             
+        protected string viewModelKeyField;
+
+        public CTMocker(string viewModelKeyField = null)
+        {
+            this.viewModelKeyField = viewModelKeyField ?? "viewModelKey";
+        }
+        public IComponentTemplate GetComponentTemplate(ViewModelAttribute viewModelAttribute)
+        {
+            string viewModelKey = viewModelAttribute.ViewModelKeys == null ? null : viewModelAttribute.ViewModelKeys.FirstOrDefault(); //guess it's the first one
+            FieldSet meta = new FieldSet();
+            if (viewModelAttribute.ViewModelKeys != null && viewModelAttribute.ViewModelKeys.Length > 0) //only add the meta value if there is something to add
+            {
+                meta.Add(viewModelKeyField,
+                        new Field
+                        {
+                            Values = new List<string> { viewModelKey }
+                        });
+            }
+
+            return new ComponentTemplate
+            {
+                Title = viewModelAttribute.ComponentTemplateName,
+                MetadataFields = meta
+            };
+        }
+    }
+
+    internal class ComponentPresentationMocker : IComponentPresentationMocker
+    {
+        private const string defaultViewModelIdFieldName = "viewModelKey";
+        private string viewModelKeyField = "";
+        private ICTMocker ctMocker;
+        internal ComponentPresentationMocker(ICTMocker ctMocker)
+        {
+            if (ctMocker == null) throw new ArgumentNullException("keyProvider");
+            this.ctMocker = ctMocker;
         }
         public IComponentPresentation ConvertToComponentPresentation(IDD4TViewModel viewModel) //For mocking DD4T objects
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
-            IComponentTemplate template = new ComponentTemplate { Title = attr.ComponentTemplateName };
+            IComponentTemplate template = ctMocker.GetComponentTemplate(attr);
             IFieldSet metadataFields;
             IFieldSet fields = CreateFields(viewModel, type, template, out metadataFields);
-            //TODO: Move these to another class or something
             AddXpathToFields(fields, "tcm:Content/custom:Content");
             AddXpathToFields(metadataFields, "tcm:Metadata/custom:Metadata");
-
             IComponentPresentation result = new ComponentPresentation
             {
                 Component = new Component
@@ -44,7 +75,7 @@ namespace DD4T.ViewModels.Mocking
         {
             Type type = viewModel.GetType();
             ViewModelAttribute attr = ReflectionCache.GetViewModelAttribute(type);
-            IComponentTemplate template = new ComponentTemplate { Title = attr.ComponentTemplateName };
+            IComponentTemplate template = ctMocker.GetComponentTemplate(attr);
             IFieldSet metadataFields;
             schemaName = attr.SchemaName;
             return CreateFields(viewModel, type, template, out metadataFields);
@@ -122,6 +153,26 @@ namespace DD4T.ViewModels.Mocking
                 }
             }
             return contentFields;
+        }
+    
+        private IComponentTemplate CreateTemplate(ViewModelAttribute attr)
+        {
+            string viewModelKey = attr.ViewModelKeys == null ? null : attr.ViewModelKeys.FirstOrDefault(); //guess it's the first one
+            FieldSet meta = new FieldSet();
+            if (attr.ViewModelKeys != null && attr.ViewModelKeys.Length > 0) //only add the meta value if there is something to add
+            {
+                meta.Add(viewModelKeyField,
+                        new Field
+                        {
+                            Values = new List<string> { viewModelKey }
+                        });
+            }
+            
+            return new ComponentTemplate
+            {
+                Title = attr.ComponentTemplateName,
+                MetadataFields = meta
+            };
         }
     }
 }

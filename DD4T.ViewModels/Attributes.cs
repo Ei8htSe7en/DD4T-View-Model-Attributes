@@ -699,14 +699,17 @@ namespace DD4T.ViewModels.Attributes
     {
         private string schemaName;
         private bool inlineEditable = false;
+        private bool isDefault = false;
         private string componentTemplateName;
+        private string[] viewModelKeys;
         /// <summary>
         /// DD4T View Model
         /// </summary>
         /// <param name="schemaName">Tridion schema name for component type for this View Model</param>
-        public ViewModelAttribute(string schemaName)
+        public ViewModelAttribute(string schemaName, bool isDefault)
         {
             this.schemaName = schemaName;
+            this.isDefault = isDefault;
         }
 
         public string SchemaName
@@ -716,13 +719,22 @@ namespace DD4T.ViewModels.Attributes
                 return schemaName;
             }
         }
+
         /// <summary>
-        /// The name of the Component Template. Use this to further specify a View model for specific presentations
+        /// The name of the Component Template. For semantic purposes only.
         /// </summary>
         public string ComponentTemplateName //TODO: Use custom CT Metadata fields instead of CT Name
         {
             get { return componentTemplateName; }
             set { componentTemplateName = value; }
+        }
+        /// <summary>
+        /// Identifiers for further specifying which View Model to use for different presentations.
+        /// </summary>
+        public string[] ViewModelKeys
+        {
+            get { return viewModelKeys; }
+            set { viewModelKeys = value; }
         }
         /// <summary>
         /// Is inline editable. Only for semantic use.
@@ -739,5 +751,40 @@ namespace DD4T.ViewModels.Attributes
             }
         }
 
+        /// <summary>
+        /// Is the default View Model for the schema. If set to true, this will be the View Model to use for a given schema if no View Model ID is specified.
+        /// </summary>
+        public bool IsDefault { get { return isDefault; } }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode(); //no need to override the hash code
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj != null && obj is ViewModelAttribute)
+            {
+                ViewModelAttribute key = (ViewModelAttribute)obj;
+                if (this.ViewModelKeys != null && key.ViewModelKeys != null)
+                {
+                    //if both have a ViewModelKey set, use both ViewModelKey and schema
+                    //Check for a match anywhere in both lists
+                    var match = from i in this.ViewModelKeys
+                                join j in key.ViewModelKeys
+                                on i equals j
+                                select i;
+                    //Schema names match and there is a matching view model ID
+                    if (this.SchemaName == key.SchemaName && match.Count() > 0)
+                        return true;
+                }
+                if (((this.ViewModelKeys == null || this.ViewModelKeys.Length == 0) && key.IsDefault) //this set of IDs is empty and the input is default
+                    || ((key.ViewModelKeys == null || key.ViewModelKeys.Length == 0) && this.IsDefault)) //input set of IDs is empty and this is default
+                {
+                    //if either one doesn't have a ViewModelIds and the other is a default, just compare Schemas
+                    return this.SchemaName == key.SchemaName;
+                }
+            }
+            return false;
+        }
     }
 }

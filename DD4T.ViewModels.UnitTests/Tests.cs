@@ -6,14 +6,14 @@ using DD4T.ContentModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
-using DD4T.ViewModels.Lists;
-using DD4T.ViewModels.Builders;
 using System.Reflection;
 using DD4T.ViewModels.XPM;
 using System.Web;
 using System.Web.Routing;
 using System.IO;
 using DD4T.Mvc.SiteEdit;
+using Ploeh.AutoFixture;
+using System.Linq.Expressions;
 
 namespace DD4T.ViewModels.UnitTests
 {
@@ -21,6 +21,7 @@ namespace DD4T.ViewModels.UnitTests
     public class Examples
     {
         private Random r = new Random();
+        private Fixture autoMocker = new Fixture();
         [TestInitialize]
         public void Init()
         {
@@ -28,10 +29,10 @@ namespace DD4T.ViewModels.UnitTests
             HttpContext.Current = new HttpContext(
                 new HttpRequest("", "http://ei8htSe7en.io", "num=" + GetRandom()),
                 new HttpResponse(new StringWriter())
-                ){};
+                ) { };
             MockSiteEdit("1", false);
         }
-        public void MockSiteEdit(string pubId, bool enabled)
+        private void MockSiteEdit(string pubId, bool enabled)
         {
             //Mock up Site Edit Settings for Pub ID 1
             SiteEditService.SiteEditSettings.Enabled = enabled;
@@ -55,12 +56,11 @@ namespace DD4T.ViewModels.UnitTests
         [TestMethod]
         public void TestBuildCPViewModelGeneric()
         {
-
             ContentContainerViewModel model = null;
-            IViewModelBuilder builder = ViewModelCore.Builder;
+            IViewModelBuilder builder = ViewModelDefaults.Builder;
             for (int i = 0; i < 10000; i++)
             {
-                IComponentPresentation cp = TestMockup();
+                IComponentPresentation cp = GetMockCp(GetMockModel());
                 model = builder.BuildCPViewModel<ContentContainerViewModel>(cp);
             }
             Assert.IsNotNull(model);
@@ -70,10 +70,10 @@ namespace DD4T.ViewModels.UnitTests
         {
 
             ContentContainerViewModel model = null;
-            IViewModelBuilder builder = ViewModelCore.Builder;
+            IViewModelBuilder builder = ViewModelDefaults.Builder;
             for (int i = 0; i < 10000; i++)
             {
-                IComponentPresentation cp = TestMockup();
+                IComponentPresentation cp = GetMockCp(GetMockModel());
                 builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
                 model = (ContentContainerViewModel)builder.BuildCPViewModel(cp);
             }
@@ -83,7 +83,7 @@ namespace DD4T.ViewModels.UnitTests
         [TestMethod]
         public void TestXpmMarkup()
         {
-            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
+            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(GetMockCp(GetMockModel()));
             var titleMarkup = model.XpmMarkupFor(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
             //make sure the nested component gets a mock ID - used to test if site edit is enabled for component
@@ -96,24 +96,194 @@ namespace DD4T.ViewModels.UnitTests
         [TestMethod]
         public void TestEditableField()
         {
-            ContentContainerViewModel model = ViewModelCore.Builder.BuildCPViewModel<ContentContainerViewModel>(TestMockup());
-            MvcHtmlString contentMarkup;            
+            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(GetMockCp(GetMockModel()));
+            MvcHtmlString contentMarkup;
             foreach (var content in model.Content)
             {
                 contentMarkup = model.XpmEditableField(m => m.Content, content);
             }
             var titleMarkup = model.XpmEditableField(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
-            
+
             var markup = ((GeneralContentViewModel)model.Content[0]).XpmEditableField(m => m.Body);
             var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmEditableField(m => m.LinkText);
             Assert.IsNotNull(markup);
         }
+        [TestMethod]
+        public void GetMockCp()
+        {
+            var model = GetMockCp(GetMockModel());
+            Assert.IsNotNull(model);
+        }
 
         [TestMethod]
-        public IComponentPresentation TestMockup()
+        public void TestBodyField()
         {
-            Random r = new Random();
+            string expectedString = autoMocker.Create<string>();
+            var cp = GetCPMockup<GeneralContentViewModel, MvcHtmlString>(x => x.Body, new MvcHtmlString(expectedString));
+            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<GeneralContentViewModel>(cp);
+            Assert.AreEqual(expectedString, newModel.Body.ToHtmlString());
+        }
+
+        private ComponentPresentation GetManuallyBuiltCp()
+        {
+            Component comp = new Component { Id = "tcm:1-23" };
+            var linksFieldSet = new FieldSet 
+                { 
+                    {
+                        "internalLink",
+                        new Field { LinkedComponentValues = new List<Component> 
+                            { 
+                                comp,
+                            }
+                        }
+                    }
+                };
+            var links = new List<FieldSet>
+            {
+                linksFieldSet, linksFieldSet, linksFieldSet
+
+            };
+            var cp = new ComponentPresentation
+            {
+                Component = new Component
+                {
+                    Id = "tcm:1-45",
+                    Fields = new FieldSet
+                    {
+                        {
+                            "links", new Field
+                            {
+                                EmbeddedValues = links
+                            }
+                        }
+                    }
+
+                },
+                ComponentTemplate = new ComponentTemplate()
+            };
+            return cp;
+        }
+
+        [TestMethod]
+        public void TestEmbeddedAndIComponentField()
+        {
+            //setup
+            string expectedString = autoMocker.Create<string>();
+            var cp = GetManuallyBuiltCp();
+            cp.Component.Id = expectedString;
+            //exercise
+            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(cp);
+            //test
+            Assert.AreEqual(3, newModel.Links.Count);
+            Assert.AreEqual(cp.Component.Id,
+                newModel.Links.FirstOrDefault<EmbeddedLinkViewModel>().InternalLink.Id);
+        }
+
+        [TestMethod]
+        public void TestLinkedComponentRichTextField()
+        {
+            string expectedString = autoMocker.Create<string>();
+            var linkedCompModel = GetCPModelMockup<GeneralContentViewModel, MvcHtmlString>(
+                x => x.Body, new MvcHtmlString(expectedString));
+            var cp = GetCPMockup<ContentContainerViewModel, ViewModelList<GeneralContentViewModel>>(
+                x => x.Content, new ViewModelList<GeneralContentViewModel> { linkedCompModel });
+            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(cp);
+            Assert.AreEqual(expectedString,
+                newModel.Content.FirstOrDefault<GeneralContentViewModel>().Body.ToHtmlString());
+        }
+
+        [TestMethod]
+        public void TestEmbeddedField()
+        {
+            string expectedString = autoMocker.Create<string>();
+            var linkedCompModel = autoMocker.Build<EmbeddedLinkViewModel>()
+                 .Without(x => x.ComponentTemplate)
+                 .Without(x => x.Builder)
+                 .Without(x => x.Fields)
+                 .Without(x => x.InternalLink)
+                 .With(x => x.LinkText, expectedString)
+                 .Create();
+            var cp = GetCPMockup<ContentContainerViewModel, ViewModelList<EmbeddedLinkViewModel>>(
+                x => x.Links, new ViewModelList<EmbeddedLinkViewModel> { linkedCompModel });
+            var newModel = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(cp);
+            Assert.AreEqual(expectedString,
+                newModel.Links.FirstOrDefault<EmbeddedLinkViewModel>().LinkText);
+        }
+
+        [TestMethod]
+        public void TestViewModelId()
+        {
+            string viewModelKey = "TitleOnly";
+            ViewModelDefaults.Builder.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
+            var cp = GetMockCp(GetMockModel());
+            ((ComponentTemplate)cp.ComponentTemplate).MetadataFields = new FieldSet
+            {
+                {
+                    "viewModelKey",
+                    new Field { Values = new List<string> { viewModelKey }}
+                }
+            };
+
+            //exercise
+            var model = ViewModelDefaults.Builder.BuildCPViewModel(cp);
+
+            //test
+            Assert.IsInstanceOfType(model, typeof(TitleViewModel));
+        }
+
+        [TestMethod]
+        public void TestCustomKeyProvider()
+        {
+            string key = autoMocker.Create<string>();
+            var cp = GetManuallyBuiltCp();
+            cp.ComponentTemplate.MetadataFields = new FieldSet()
+            {
+                {
+                    key,
+                    new Field { Values = new List<string> { "TitleOnly" }}
+                }
+            };
+            cp.Component.Schema = new Schema { Title = "ContentContainer" };
+            var provider = new CustomKeyProvider(key);
+            var builder = new ViewModelBuilder(provider);
+            builder.LoadViewModels(typeof(ContentContainerViewModel).Assembly);
+            var model = builder.BuildCPViewModel(cp);
+
+            Assert.IsInstanceOfType(model, typeof(TitleViewModel));
+        }
+
+        private TModel GetCPModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
+            where TModel : IComponentPresentationViewModel
+        {
+            return autoMocker.Build<TModel>()
+                 .Without(x => x.ComponentPresentation)
+                 .Without(x => x.Builder)
+                 .Without(x => x.Fields)
+                 .With(propLambda, value)
+                 .Create();
+        }
+        private TModel GetEmbeddedModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
+            where TModel : IEmbeddedSchemaViewModel
+        {
+            return autoMocker.Build<TModel>()
+                 .Without(x => x.ComponentTemplate)
+                 .Without(x => x.Builder)
+                 .Without(x => x.Fields)
+                 .With(propLambda, value)
+                 .Create();
+        }
+
+
+        private IComponentPresentation GetCPMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
+            where TModel : IComponentPresentationViewModel
+        {
+            return ViewModelDefaults.Mocker.ConvertToComponentPresentation(GetCPModelMockup<TModel, TProp>(propLambda, value));
+        }
+
+
+        private IDD4TViewModel GetMockModel()
+        {
             ContentContainerViewModel model = new ContentContainerViewModel
             {
                 Content = new ViewModelList<GeneralContentViewModel>
@@ -139,8 +309,12 @@ namespace DD4T.ViewModels.UnitTests
                 },
                 Title = "I am a content container!"
             };
+            return model;
+        }
 
-            IComponentPresentation cp = ViewModelCore.Mocker.ConvertToComponentPresentation(model);
+        private IComponentPresentation GetMockCp(IDD4TViewModel model)
+        {
+            IComponentPresentation cp = ViewModelDefaults.Mocker.ConvertToComponentPresentation(model);
             ((Component)cp.Component).Id = "tcm:1-23-16";
             Assert.IsNotNull(cp);
             return cp;
@@ -148,7 +322,23 @@ namespace DD4T.ViewModels.UnitTests
 
     }
 
-    [ViewModel("GeneralContent")]
+    public class CustomKeyProvider : ViewModelKeyProviderBase
+    {
+        public CustomKeyProvider(string fieldName)
+        {
+            this.ViewModelKeyField = fieldName;
+        }
+    }
+
+
+    [ViewModel("ContentContainer", false, ViewModelKeys = new string[] { "TitleOnly" })]
+    public class TitleViewModel : ComponentPresentationViewModelBase
+    {
+        [TextField("title")]
+        public string Title { get; set; }
+    }
+
+    [ViewModel("GeneralContent", true, ViewModelKeys = new string[] { "BasicGeneralContent" })]
     public class GeneralContentViewModel : ComponentPresentationViewModelBase
     {
         [TextField("title")]
@@ -166,7 +356,8 @@ namespace DD4T.ViewModels.UnitTests
         [NumberField("someNumber")]
         public double NumberFieldExample { get; set; }
     }
-    [ViewModel("ContentContainer")]
+
+    [ViewModel("ContentContainer", true)]
     public class ContentContainerViewModel : ComponentPresentationViewModelBase
     {
         [TextField("title", InlineEditable = true)]
@@ -177,9 +368,9 @@ namespace DD4T.ViewModels.UnitTests
 
         [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
         public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }
-
     }
-    [ViewModel("EmbeddedLink")]
+
+    [ViewModel("EmbeddedLink", true)]
     public class EmbeddedLinkViewModel : EmbeddedSchemaViewModelBase
     {
         [TextField("linkText")]

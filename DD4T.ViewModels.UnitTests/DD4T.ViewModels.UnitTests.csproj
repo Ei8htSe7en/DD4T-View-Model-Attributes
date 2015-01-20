@@ -35,18 +35,46 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DD4T.ContentModel">
-      <HintPath>..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.ContentModel.dll</HintPath>
+    <Reference Include="DD4T.ContentModel, Version=1.31.0.0, Culture=neutral, PublicKeyToken=4450e3c7f68bf872, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.ContentModel.dll</HintPath>
     </Reference>
-    <Reference Include="DD4T.ContentModel.Contracts">
-      <HintPath>..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.ContentModel.Contracts.dll</HintPath>
+    <Reference Include="DD4T.ContentModel.Contracts, Version=1.31.0.0, Culture=neutral, PublicKeyToken=4450e3c7f68bf872, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.ContentModel.Contracts.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Factories, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Factories.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.LogWrappers.Entlib, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.LogWrappers.Entlib.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.LogWrappers.Log4Net, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.LogWrappers.Log4Net.dll</HintPath>
     </Reference>
     <Reference Include="DD4T.Mvc, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Documents\VS Projects\build\DD4T.Mvc.dll</HintPath>
+      <HintPath>..\packages\DD4T-MVC4.1.31.1\lib\DD4T.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Utils, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="DD4T.Web, Version=1.31.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DD4TFramework.1.31.0\lib\DD4T.Web.dll</HintPath>
     </Reference>
     <Reference Include="Moq">
       <HintPath>..\packages\Moq.4.2.1409.1722\lib\net40\Moq.dll</HintPath>
+    </Reference>
+    <Reference Include="Moq.AutoMock">
+      <HintPath>..\packages\Moq.AutoMock.0.3.2.1\lib\net40\Moq.AutoMock.dll</HintPath>
+    </Reference>
+    <Reference Include="Ploeh.AutoFixture">
+      <HintPath>..\packages\AutoFixture.3.22.0\lib\net40\Ploeh.AutoFixture.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -73,16 +101,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="SiteEdit_config.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\DD4T.ViewModels\DD4T.ViewModels.csproj">
       <Project>{9b3df9c0-0779-4a22-8b63-b6745da7edc3}</Project>
       <Name>DD4T.ViewModels</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="SiteEdit_config.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

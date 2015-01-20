@@ -9,7 +9,7 @@ using System.Text;
 
 namespace DD4T.ViewModels.Reflection
 {
-    public class ReflectionCache
+    internal class ReflectionCache
     {
         private static Dictionary<Type, List<FieldAttributeProperty>> fieldProperties = new Dictionary<Type, List<FieldAttributeProperty>>();
         private static Dictionary<Type, Func<object>> constructors = new Dictionary<Type, Func<object>>();
@@ -159,7 +159,7 @@ namespace DD4T.ViewModels.Reflection
         }
     }
 
-    public struct FieldAttributeProperty
+    internal struct FieldAttributeProperty
     {
         public string Name { get; set; }
         public Action<object, object> Set { get; set; }

@@ -1,55 +1,47 @@
-﻿using DD4T.ViewModels.Contracts;
+﻿using DD4T.ContentModel;
+using DD4T.ViewModels.Attributes;
+using DD4T.ViewModels.Contracts;
+using DD4T.ViewModels.Exceptions;
+using DD4T.ViewModels.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using DD4T.ContentModel;
 using System.Reflection;
-using DD4T.ViewModels.Attributes;
-using DD4T.Mvc.Html;
-using System.Web.Mvc;
-using DD4T.ViewModels.Exceptions;
-using DD4T.ViewModels.Reflection;
-using DD4T.ViewModels.Mocking;
+using System.Text;
 
-namespace DD4T.ViewModels.Builders
+namespace DD4T.ViewModels
 {
     /// <summary>
-    /// Static container class for View Model singletons
+    /// Implementation of View Model Builder. If using View Model Type inference, this 
+    /// should be used as a singleton due to the reflection overhead involved in LoadViewModels.
     /// </summary>
-    public static class ViewModelCore
+    public class ViewModelBuilder : IViewModelBuilder
     {
-        private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(); //singleton
-        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(); //singleton
-        public static IViewModelBuilder Builder { get { return viewModelBuilder; } }
-        public static IComponentPresentationMocker Mocker { get { return mocker; } }
-    }
-
-    /// <summary>
-    /// Implementation of View Model Builder. Use as a singleton.
-    /// </summary>
-    internal class ViewModelBuilder : IViewModelBuilder
-    {
-        private IDictionary<ViewModelKey, Type> viewModels = new Dictionary<ViewModelKey, Type>();
+        private IDictionary<ViewModelAttribute, Type> viewModels = new Dictionary<ViewModelAttribute, Type>();
         private IList<Assembly> loadedAssemblies = new List<Assembly>();
-
-        internal ViewModelBuilder() { } //only provide an internal constructor, this class can never be instantiated elsewhere
-
+        private IViewModelKeyProvider keyProvider;
+        public ViewModelBuilder(IViewModelKeyProvider keyProvider)
+        {
+            if (keyProvider == null) throw new ArgumentNullException("keyProvider");
+            this.keyProvider = keyProvider;
+        }
         #region IViewModelBuilder
-        public void LoadViewModels(Assembly assembly) //A method like this assumes we have a singleton of this instance
+        /// <summary>
+        /// Loads View Model Types from an Assembly. Use minimally due to reflection overhead.
+        /// </summary>
+        /// <param name="assembly"></param>
+        public void LoadViewModels(Assembly assembly) //We assume we have a singleton of this instance, otherwise we incur a lot of overhead
         {
             if (!loadedAssemblies.Contains(assembly))
             {
                 loadedAssemblies.Add(assembly);
                 ViewModelAttribute viewModelAttr;
-                ViewModelKey key;
                 foreach (var type in assembly.GetTypes())
                 {
                     viewModelAttr = ReflectionCache.GetViewModelAttribute(type);
                     if (viewModelAttr != null)
                     {
-                        key = new ViewModelKey(viewModelAttr.SchemaName, viewModelAttr.ComponentTemplateName);
-                        if (!viewModels.ContainsKey(key)) viewModels.Add(key, type);
+                        if (!viewModels.ContainsKey(viewModelAttr)) viewModels.Add(viewModelAttr, type); //TODO: Change this, it's wrong
                     }
                 }
             }
@@ -72,18 +64,22 @@ namespace DD4T.ViewModels.Builders
         public IComponentPresentationViewModel BuildCPViewModel(IComponentPresentation cp)
         {
             if (cp == null) throw new ArgumentNullException("cp");
-            var key = new ViewModelKey(cp.Component.Schema.Title, cp.ComponentTemplate.Title);
-            IComponentPresentationViewModel result = null;
-            if (viewModels.ContainsKey(key))
+            var key = new ViewModelAttribute(cp.Component.Schema.Title, false)
             {
-                Type type = viewModels[key];
+                ViewModelKeys = GetViewModelId(cp.ComponentTemplate)
+            };
+            IComponentPresentationViewModel result = null;
+            //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
+            Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
+            if (type != null)
+            {
                 result = (IComponentPresentationViewModel)BuildCPViewModel(type, cp);
             }
             else
             {
                 throw new ViewModelTypeNotFoundExpception(
-                    String.Format("Could not find view model for schema {0} and component template {1} in loaded assemblies."
-                    , key.SchemaName, key.ComponentTemplateName));
+                    String.Format("Could not find view model for schema '{0}' and View Model ID '{1}' or default for schema '{0}' in loaded assemblies."
+                    , key.SchemaName, key.ViewModelKeys.FirstOrDefault()));
             }
             return result;
         }
@@ -97,18 +93,22 @@ namespace DD4T.ViewModels.Builders
             if (embeddedFields == null) throw new ArgumentNullException("embeddedFields");
             if (schema == null) throw new ArgumentNullException("schema");
             if (template == null) throw new ArgumentNullException("template");
-            var key = new ViewModelKey(schema.Title, template.Title);
-            IEmbeddedSchemaViewModel result = null;
-            if (viewModels.ContainsKey(key))
+            var key = new ViewModelAttribute(schema.Title, false)
             {
-                Type type = viewModels[key];
+                ViewModelKeys = GetViewModelId(template)
+            };
+            IEmbeddedSchemaViewModel result = null;
+            //var type = viewModels.Where(x => x.Key.Equals(key)).Select(x => x.Value).FirstOrDefault();
+            Type type = viewModels.ContainsKey(key) ? viewModels[key] : null; //Keep an eye on this -- GetHashCode isn't the same as Equals
+            if (type != null)
+            {
                 result = (IEmbeddedSchemaViewModel)BuildEmbeddedViewModel(type, embeddedFields, template);
             }
             else
             {
                 throw new ViewModelTypeNotFoundExpception(
-                    String.Format("Could not find view model for schema {0} and component template {1} in loaded assemblies."
-                    , key.SchemaName, key.ComponentTemplateName));
+                    String.Format("Could not find view model for schema {0} and ID {1} in loaded assemblies."
+                    , key.SchemaName, key.ViewModelKeys.FirstOrDefault()));
             }
             return result;
         }
@@ -152,7 +152,7 @@ namespace DD4T.ViewModels.Builders
                         catch (Exception e)
                         {
                             if (e is TargetException || e is InvalidCastException)
-                                throw new InvalidCastException(
+                                throw new FieldTypeMismatchException(
                                     String.Format("Type mismatch for property {0}. Expected type for {1} is {2}. Property is of type {3}."
                                     , prop.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, prop.PropertyType.FullName));
                             else throw e;
@@ -161,8 +161,12 @@ namespace DD4T.ViewModels.Builders
                 }
             }
         }
+        private string[] GetViewModelId(IComponentTemplate template)
+        {
+            string key = keyProvider.GetViewModelKey(template);
+            return key == null ? null : new string[] { key };
+        }
         #endregion
     }
-
 
 }
