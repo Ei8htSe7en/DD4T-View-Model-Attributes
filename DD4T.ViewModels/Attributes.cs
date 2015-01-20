@@ -245,7 +245,7 @@ namespace DD4T.ViewModels.Attributes
             if (schema == null) throw new ArgumentNullException("schema");
             //string ctName;
             string viewModelKey = builder.ViewModelKeyProvider.GetViewModelKey(template);
-            ViewModelAttribute key = new ViewModelAttribute(schema.Title, true)
+            ViewModelAttribute key = new ViewModelAttribute(schema.Title, false)
             {
                 ViewModelKeys = viewModelKey == null ? null : new string[] { viewModelKey }
             };
@@ -283,7 +283,7 @@ namespace DD4T.ViewModels.Attributes
                 return embeddedSchemaType;
             }
         }
-        //public EmbeddedSchemaFieldAttribute(string fieldName) : base(fieldName) { }
+        
         public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
