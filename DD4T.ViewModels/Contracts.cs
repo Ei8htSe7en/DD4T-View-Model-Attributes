@@ -3,6 +3,7 @@ using DD4T.ViewModels.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Web.Mvc;
@@ -17,6 +18,10 @@ namespace DD4T.ViewModels.Contracts
         IViewModelBuilder Builder { get; set; }
         IFieldSet Fields { get; set; }
         IFieldSet MetadataFields { get; }
+        /// <summary>
+        /// Publication ID of the underlying Tridion item
+        /// </summary>
+        int PublicationId { get; }
     }
 
 
@@ -122,6 +127,103 @@ namespace DD4T.ViewModels.Contracts
         DateTime GetLastPublishedDate(IComponentPresentationViewModel viewModel);
     }
 
+    public interface IXpmMarkupService
+    {
+        /// <summary>
+        /// Renders the XPM Markup for a field
+        /// </summary>
+        /// <param name="field">DD4T Field</param>
+        /// <param name="index">Optional index for multi value fields</param>
+        /// <returns>XPM Markup</returns>
+        string RenderXpmMarkupForField(IField field, int index = -1);
+        /// <summary>
+        /// Renders the XPM Markup for a Component Presentation
+        /// </summary>
+        /// <param name="cp">Component Presentation</param>
+        /// <param name="region">Optional region</param>
+        /// <returns>XPM Markup</returns>
+        string RenderXpmMarkupForComponent(IComponentPresentation cp, string region = null);
+        /// <summary>
+        /// Determines if Site Edit is enabled for a particular item
+        /// </summary>
+        /// <param name="item">Item</param>
+        /// <returns></returns>
+        bool IsSiteEditEnabled(IRepositoryLocal item);
+        /// <summary>
+        /// Determines if Site Edit is enabeld for a publication
+        /// </summary>
+        /// <param name="publicationId">Publication ID</param>
+        /// <returns></returns>
+        bool IsSiteEditEnabled(int publicationId);
+    }
+
+    //TODO: Instantiate and add these to the IDD4TViewModel using System.Reflection's MakeGenericType
+    public interface IXpmRenderer<TModel> where TModel : IDD4TViewModel
+    {
+        /// <summary>
+        /// Renders both XPM Markup and Field Value 
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="index">Optional index for a multi-value field</param>
+        /// <returns>XPM Markup and field value</returns>
+        MvcHtmlString XpmEditableField<TProp>(Expression<Func<TModel, TProp>> propertyLambda, int index = -1);
+        /// <summary>
+        /// Renders both XPM Markup and Field Value for a multi-value field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <typeparam name="TItem">Item type - this must match the generic type of the property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="item">The particular value of the multi-value field</param>
+        /// <example>
+        /// foreach (var content in model.Content)
+        /// {
+        ///     @model.XpmEditableField(m => m.Content, content);
+        /// }
+        /// </example>
+        /// <returns>XPM Markup and field value</returns>
+        MvcHtmlString XpmEditableField<TProp, TItem>(Expression<Func<TModel, TProp>> propertyLambda, TItem item);
+        /// <summary>
+        /// Renders the XPM markup for a field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="index">Optional index for a multi-value field</param>
+        /// <returns>XPM Markup</returns>
+        MvcHtmlString XpmMarkupFor<TProp>(Expression<Func<TModel, TProp>> propertyLambda, int index = -1);
+        /// <summary>
+        /// Renders XPM Markup for a multi-value field
+        /// </summary>
+        /// <typeparam name="TModel">Model type</typeparam>
+        /// <typeparam name="TProp">Property type</typeparam>
+        /// <typeparam name="TItem">Item type - this must match the generic type of the property type</typeparam>
+        /// <param name="model">Model</param>
+        /// <param name="propertyLambda">Lambda expression representing the property to render. This must be a direct property of the model.</param>
+        /// <param name="item">The particular value of the multi-value field</param>
+        /// <example>
+        /// foreach (var content in model.Content)
+        /// {
+        ///     @model.XpmMarkupFor(m => m.Content, content);
+        ///     @content;
+        /// }
+        /// </example>
+        /// <returns>XPM Markup</returns>
+        MvcHtmlString XpmMarkupFor<TProp, TItem>(Expression<Func<TModel, TProp>> propertyLambda, TItem item);
+        /// <summary>
+        /// Renders the XPM Markup for a Component Presentation
+        /// </summary>
+        /// <param name="model">Model</param>
+        /// <param name="region">Region</param>
+        /// <returns>XPM Markup</returns>
+        MvcHtmlString StartXpmEditingZone(string region = null);
+    }
+
     /// <summary>
     /// Provides the View Model Key using a Component Template
     /// </summary>
@@ -132,7 +234,7 @@ namespace DD4T.ViewModels.Contracts
         /// Return values of null or empty string will be ignored.
         /// </summary>
         /// <param name="template">Component Template</param>
-        /// <returns></returns>
+        /// <returns>View Model Key</returns>
         string GetViewModelKey(IComponentTemplate template);
     }
 
@@ -188,6 +290,20 @@ namespace DD4T.ViewModels.Contracts
                 return metadataFields;
             }
         }
+        public int PublicationId
+        {
+            get
+            {
+                try
+                {
+                    return new TcmUri(ComponentPresentation.Component.Id).PublicationId;
+                }
+                catch
+                {
+                    return 0; //TODO: Get pub id
+                }
+            }
+        }
     }
     /// <summary>
     /// Base class for all Embedded Schema View Models
@@ -214,6 +330,20 @@ namespace DD4T.ViewModels.Contracts
             get
             {
                 return null;
+            }
+        }
+        public int PublicationId
+        {
+            get
+            {
+                try
+                {
+                    return new TcmUri(ComponentTemplate.Id).PublicationId;
+                }
+                catch
+                {
+                    return 0; //TODO: Get pub id
+                }
             }
         }
     }

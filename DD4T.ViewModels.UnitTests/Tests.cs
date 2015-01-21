@@ -30,7 +30,7 @@ namespace DD4T.ViewModels.UnitTests
                 new HttpRequest("", "http://ei8htSe7en.io", "num=" + GetRandom()),
                 new HttpResponse(new StringWriter())
                 ) { };
-            MockSiteEdit("1", false);
+            MockSiteEdit("1", true);
         }
         private void MockSiteEdit(string pubId, bool enabled)
         {
@@ -73,9 +73,9 @@ namespace DD4T.ViewModels.UnitTests
             IViewModelBuilder builder = ViewModelDefaults.Builder;
             for (int i = 0; i < 10000; i++)
             {
-                IComponentPresentation cp = GetMockCp(GetMockModel());
+                IComponentPresentation Model = GetMockCp(GetMockModel());
                 builder.LoadViewModels(Assembly.GetAssembly(typeof(ContentContainerViewModel)));
-                model = (ContentContainerViewModel)builder.BuildCPViewModel(cp);
+                model = (ContentContainerViewModel)builder.BuildCPViewModel(Model);
             }
             Assert.IsNotNull(model);
         }
@@ -252,6 +252,38 @@ namespace DD4T.ViewModels.UnitTests
 
             Assert.IsInstanceOfType(model, typeof(TitleViewModel));
         }
+
+        [TestMethod]
+        public void TestOOXPM()
+        {
+            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(GetMockCp(GetMockModel()));
+            var xpm = new XpmRenderer<ContentContainerViewModel>(model);
+            var titleMarkup = xpm.XpmMarkupFor(m => m.Title);
+            var compMarkup = xpm.StartXpmEditingZone();
+            //make sure the nested component gets a mock ID - used to test if site edit is enabled for component
+            ((Component)((GeneralContentViewModel)model.Content[0]).ComponentPresentation.Component).Id = "tcm:1-555-16";
+            var generalContentXpm = new XpmRenderer<GeneralContentViewModel>(((GeneralContentViewModel)model.Content[0]));
+            var markup = generalContentXpm.XpmMarkupFor(m => m.Body);
+            var embeddedXpm = new XpmRenderer<EmbeddedLinkViewModel>(((EmbeddedLinkViewModel)model.Links[0]));
+            var embeddedTest = embeddedXpm.XpmMarkupFor(m => m.LinkText);
+            Assert.IsNotNull(markup);
+        }
+
+        [TestMethod]
+        public void TestGetXpmRenderer()
+        {
+            ContentContainerViewModel model = ViewModelDefaults.Builder.BuildCPViewModel<ContentContainerViewModel>(GetMockCp(GetMockModel()));
+            var xpm = XpmUtility.GetRenderer(model);
+            var titleMarkup = xpm.XpmMarkupFor(m => m.Title);
+            var compMarkup = xpm.StartXpmEditingZone();
+            ((Component)((GeneralContentViewModel)model.Content[0]).ComponentPresentation.Component).Id = "tcm:1-555-16";
+            var generalContentXpm = XpmUtility.GetRenderer((GeneralContentViewModel)model.Content[0]);
+            var markup = generalContentXpm.XpmMarkupFor(m => m.Body);
+            var embeddedXpm = XpmUtility.GetRenderer((EmbeddedLinkViewModel)model.Links[0]);
+            var embeddedTest = embeddedXpm.XpmMarkupFor(m => m.LinkText);
+            Assert.IsNotNull(markup);
+        }
+
 
         private TModel GetCPModelMockup<TModel, TProp>(Expression<Func<TModel, TProp>> propLambda, TProp value)
             where TModel : IComponentPresentationViewModel

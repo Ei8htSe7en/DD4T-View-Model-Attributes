@@ -79,7 +79,9 @@
     <Compile Include="Mocking.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reflection.cs" />
-    <Compile Include="XPM.cs" />
+    <Compile Include="XPM\XPM.cs" />
+    <Compile Include="XPM\XpmMarkupService.cs" />
+    <Compile Include="XPM\XpmRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
