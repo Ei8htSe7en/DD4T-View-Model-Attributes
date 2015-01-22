@@ -147,7 +147,8 @@ namespace DD4T.ViewModels
                                         , prop.Name, fieldAttribute.GetType().Name, fieldAttribute.ExpectedReturnType.FullName, prop.PropertyType.FullName));
                                 else throw e;
                             }
-                            fields.Add(fieldAttribute.FieldName, field);
+                            if (!fields.ContainsKey(fieldAttribute.FieldName))
+                                fields.Add(fieldAttribute.FieldName, field);
                         }
                     }
                 }

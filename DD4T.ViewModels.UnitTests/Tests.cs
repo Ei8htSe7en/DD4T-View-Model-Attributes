@@ -104,7 +104,8 @@ namespace DD4T.ViewModels.UnitTests
             }
             var titleMarkup = model.XpmEditableField(m => m.Title);
             var compMarkup = model.StartXpmEditingZone();
-
+            //Need to initialize the ID so there is a publication ID to check
+            ((Component)((GeneralContentViewModel)model.Content[0]).ComponentPresentation.Component).Id = "tcm:1-555-16";
             var markup = ((GeneralContentViewModel)model.Content[0]).XpmEditableField(m => m.Body);
             var embeddedTest = ((EmbeddedLinkViewModel)model.Links[0]).XpmEditableField(m => m.LinkText);
             Assert.IsNotNull(markup);
@@ -212,7 +213,7 @@ namespace DD4T.ViewModels.UnitTests
         }
 
         [TestMethod]
-        public void TestViewModelId()
+        public void TestViewModelKey()
         {
             string viewModelKey = "TitleOnly";
             ViewModelDefaults.Builder.LoadViewModels(typeof(GeneralContentViewModel).Assembly);
@@ -397,6 +398,9 @@ namespace DD4T.ViewModels.UnitTests
 
         [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
         public ViewModelList<GeneralContentViewModel> Content { get; set; }
+
+        [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(TitleViewModel) })]
+        public TitleViewModel OtherContent { get; set; }
 
         [EmbeddedSchemaField("links", typeof(EmbeddedLinkViewModel), AllowMultipleValues = true)]
         public ViewModelList<EmbeddedLinkViewModel> Links { get; set; }

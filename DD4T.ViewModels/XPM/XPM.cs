@@ -221,26 +221,6 @@ namespace DD4T.ViewModels.XPM
             }
         }
         #endregion
-        //for testing only
-        [Obsolete]
-        public static IField FieldFor<TModel, TProp>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, int index = -1) where TModel : IDD4TViewModel
-        {
-            var fieldProp = GetFieldProperty(propertyLambda);
-            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-            var fieldName = fieldProp.FieldAttribute.FieldName;
-            var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
-            return field;
-        }
-        [Obsolete]
-        public static IField FieldFor<TModel, TProp, TItem>(this TModel model, Expression<Func<TModel, TProp>> propertyLambda, TItem item) where TModel : IDD4TViewModel
-        {
-            var fieldProp = GetFieldProperty(propertyLambda);
-            var fields = fieldProp.FieldAttribute.IsMetadata ? model.MetadataFields : model.Fields;
-            int index = IndexOf(fieldProp, model, item);
-            var fieldName = fieldProp.FieldAttribute.FieldName;
-            var field = fields.ContainsKey(fieldName) ? fields[fieldName] : null;
-            return field;
-        }
     }
 
 

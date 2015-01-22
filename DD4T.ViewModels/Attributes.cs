@@ -106,23 +106,13 @@ namespace DD4T.ViewModels.Attributes
             set { isMetadata = value; }
         }
     }
-
-    //Do we need a Metadata attribtue or should is just be a param of the Field Attribute?
-    //public class MetadataFieldAttribute : FieldAttribute
-    //{
-    //    //Any key differences between Metadata and normal fields? Only difference is to use Component.MetadataField
-    //    public MetadataFieldAttribute(string fieldName, SchemaFieldType fieldType)
-    //        : base(fieldName, fieldType)
-    //    { }
-    //}
-
     /// <summary>
     /// A Component Link Field
     /// </summary>
     /// <example>
     /// To create a multi value linked component with a custom return Type:
     ///     [LinkedComponentField("content", LinkedComponentTypes = new Type[] { typeof(GeneralContentViewModel) }, AllowMultipleValues = true)]
-    ///     public ViewModelList<GeneralContentViewModel> Content { get; set; }
+    ///     public ViewModelList'GeneralContentViewModel' Content { get; set; }
     ///     
     /// To create a single linked component using the default DD4T type:
     ///     [LinkedComponentField("internalLink")]
@@ -156,28 +146,31 @@ namespace DD4T.ViewModels.Attributes
         public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            if (AllowMultipleValues)
+            if (field.LinkedComponentValues != null && field.LinkedComponentValues.Count > 0)
             {
-                if (linkedComponentTypes == null)
+                if (AllowMultipleValues)
                 {
-                    fieldValue = field.LinkedComponentValues;
+                    if (linkedComponentTypes == null)
+                    {
+                        fieldValue = field.LinkedComponentValues;
+                    }
+                    else
+                    {
+                        //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
+                        IList<IDD4TViewModel> list =
+                            (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
+                        foreach (var component in field.LinkedComponentValues)
+                        {
+                            list.Add(BuildLinkedComponent(field.LinkedComponentValues[0], template, builder));
+                        }
+                        fieldValue = list;
+                    }
                 }
                 else
                 {
-                    //Property must implement IList<IComponentPresentationViewModel> -- use ComponentViewModelList<T>
-                    IList<IDD4TViewModel> list =
-                        (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
-                    foreach (var component in field.LinkedComponentValues)
-                    {
-                        list.Add(BuildLinkedComponent(field.LinkedComponentValues[0], template, builder));
-                    }
-                    fieldValue = list;
+                    fieldValue = linkedComponentTypes == null ? (object)field.LinkedComponentValues[0]
+                        : (object)BuildLinkedComponent(field.LinkedComponentValues[0], template, builder);
                 }
-            }
-            else
-            {
-                fieldValue = linkedComponentTypes == null ? (object)field.LinkedComponentValues[0]
-                    : (object)BuildLinkedComponent(field.LinkedComponentValues[0], template, builder);
             }
             return fieldValue;
         }
@@ -236,7 +229,8 @@ namespace DD4T.ViewModels.Attributes
             //need to determine schema to choose the Type
             Type type = GetViewModelType(component.Schema, builder, template);
             //linkedModel = BuildCPViewModel(linkedType, linkedCp);
-            return builder.BuildCPViewModel(type, linkedCp);
+            if (type == null) return null;
+            else return builder.BuildCPViewModel(type, linkedCp);
         }
         private Type GetViewModelType(ISchema schema, IViewModelBuilder builder, IComponentTemplate template = null)
         {
@@ -284,25 +278,28 @@ namespace DD4T.ViewModels.Attributes
                 return embeddedSchemaType;
             }
         }
-        
+
         public override object GetFieldValue(IField field, Type propertyType, IComponentTemplate template, IViewModelBuilder builder = null)
         {
             object fieldValue = null;
-            if (AllowMultipleValues)
+            if (field.EmbeddedValues != null && field.EmbeddedValues.Count > 0)
             {
-                //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
-                IList<IDD4TViewModel> list = (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
-                foreach (var fieldSet in field.EmbeddedValues)
+                if (AllowMultipleValues)
                 {
-                    list.Add(builder.BuildEmbeddedViewModel(
-                    EmbeddedSchemaType,
-                    fieldSet, template));
+                    //Property must implement IList<IEmbeddedSchemaViewModel> -- use EmbeddedViewModelList<T>
+                    IList<IDD4TViewModel> list = (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
+                    foreach (var fieldSet in field.EmbeddedValues)
+                    {
+                        list.Add(builder.BuildEmbeddedViewModel(
+                        EmbeddedSchemaType,
+                        fieldSet, template));
+                    }
+                    fieldValue = list;
                 }
-                fieldValue = list;
-            }
-            else
-            {
-                fieldValue = builder.BuildEmbeddedViewModel(EmbeddedSchemaType, field.EmbeddedValues[0], template);
+                else
+                {
+                    fieldValue = builder.BuildEmbeddedViewModel(EmbeddedSchemaType, field.EmbeddedValues[0], template);
+                }
             }
             return fieldValue;
         }
