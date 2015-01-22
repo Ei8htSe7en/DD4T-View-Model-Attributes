@@ -161,7 +161,7 @@ namespace DD4T.ViewModels.Attributes
                             (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
                         foreach (var component in field.LinkedComponentValues)
                         {
-                            list.Add(BuildLinkedComponent(field.LinkedComponentValues[0], template, builder));
+                            list.Add(BuildLinkedComponent(component, template, builder));
                         }
                         fieldValue = list;
                     }
@@ -406,7 +406,7 @@ namespace DD4T.ViewModels.Attributes
         }
         public override IField SetFieldValue(object value, Type propertyType, IComponentPresentationMocker builder = null)
         {
-            Field field = new Field { FieldType = FieldType.MultiMediaLink };
+            Field field = new Field { FieldType = FieldType.Text };
             if (AllowMultipleValues)
             {
                 if (IsBooleanValue)
