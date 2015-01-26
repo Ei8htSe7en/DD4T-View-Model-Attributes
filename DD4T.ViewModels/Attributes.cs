@@ -161,7 +161,9 @@ namespace DD4T.ViewModels.Attributes
                             (IList<IDD4TViewModel>)ReflectionCache.CreateInstance(propertyType);
                         foreach (var component in field.LinkedComponentValues)
                         {
-                            list.Add(BuildLinkedComponent(component, template, builder));
+                            var model = BuildLinkedComponent(component, template, builder);
+                            if (model != null)
+                                list.Add(model);
                         }
                         fieldValue = list;
                     }

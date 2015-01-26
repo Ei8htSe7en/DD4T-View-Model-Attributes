@@ -23,7 +23,7 @@ namespace DD4T.ViewModels
         //Singletons
         private static readonly IViewModelKeyProvider keyProvider =
             new WebConfigViewModelKeyProvider("ViewModelKeyFieldName");
-        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(new CTMocker());
+        private static readonly IComponentPresentationMocker mocker = new ComponentPresentationMocker(new CTMocker(1), 1);
         private static readonly IViewModelBuilder viewModelBuilder = new ViewModelBuilder(keyProvider);
         /// <summary>
         /// Default View Model Builder. 

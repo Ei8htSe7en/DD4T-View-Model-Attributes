@@ -11,12 +11,23 @@ using System.Web;
 
 namespace DD4T.ViewModels
 {
+    internal static class TridionHelper
+    {
+        public static string GetRandomTcmUri(int publicationId, int itemType = 0)
+        {
+            string suffix = null;
+            if (itemType > 0)
+                suffix = "-" + itemType;
+            return string.Format("tcm:{0}-{1}{2}", publicationId, new Random().Next(1, 1000), suffix);
+        }
+    }
     public class CTMocker : ICTMocker
     {
         protected string viewModelKeyField;
-
-        public CTMocker(string viewModelKeyField = null)
+        private int publicationId = 1;
+        public CTMocker(int publicationId, string viewModelKeyField = null)
         {
+            this.publicationId = publicationId;
             this.viewModelKeyField = viewModelKeyField ?? "viewModelKey";
         }
         public IComponentTemplate GetComponentTemplate(ViewModelAttribute viewModelAttribute)
@@ -35,7 +46,8 @@ namespace DD4T.ViewModels
             return new ComponentTemplate
             {
                 Title = viewModelAttribute.ComponentTemplateName,
-                MetadataFields = meta
+                MetadataFields = meta,
+                Id = TridionHelper.GetRandomTcmUri(publicationId, 32)
             };
         }
     }
@@ -43,11 +55,12 @@ namespace DD4T.ViewModels
     internal class ComponentPresentationMocker : IComponentPresentationMocker
     {
         private const string defaultViewModelIdFieldName = "viewModelKey";
-        private string viewModelKeyField = "";
         private ICTMocker ctMocker;
-        internal ComponentPresentationMocker(ICTMocker ctMocker)
+        private int publicationId = 1;
+        internal ComponentPresentationMocker(ICTMocker ctMocker, int publicationId)
         {
-            if (ctMocker == null) throw new ArgumentNullException("keyProvider");
+            this.publicationId = publicationId;
+            if (ctMocker == null) throw new ArgumentNullException("ctMocker");
             this.ctMocker = ctMocker;
         }
         public IComponentPresentation ConvertToComponentPresentation(IDD4TViewModel viewModel) //For mocking DD4T objects
@@ -65,7 +78,8 @@ namespace DD4T.ViewModels
                 {
                     Fields = (FieldSet)fields,
                     MetadataFields = (FieldSet)metadataFields,
-                    Schema = new Schema { Title = attr.SchemaName }
+                    Schema = new Schema { Title = attr.SchemaName, Id = TridionHelper.GetRandomTcmUri(1, 8) },
+                    Id = TridionHelper.GetRandomTcmUri(publicationId)
                 },
                 ComponentTemplate = (ComponentTemplate)template
             };
@@ -154,26 +168,6 @@ namespace DD4T.ViewModels
                 }
             }
             return contentFields;
-        }
-    
-        private IComponentTemplate CreateTemplate(ViewModelAttribute attr)
-        {
-            string viewModelKey = attr.ViewModelKeys == null ? null : attr.ViewModelKeys.FirstOrDefault(); //guess it's the first one
-            FieldSet meta = new FieldSet();
-            if (attr.ViewModelKeys != null && attr.ViewModelKeys.Length > 0) //only add the meta value if there is something to add
-            {
-                meta.Add(viewModelKeyField,
-                        new Field
-                        {
-                            Values = new List<string> { viewModelKey }
-                        });
-            }
-            
-            return new ComponentTemplate
-            {
-                Title = attr.ComponentTemplateName,
-                MetadataFields = meta
-            };
         }
     }
 }
